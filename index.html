@@ -1266,9 +1266,21 @@ function migrate(s){
     s.awardsV=2;
   }
   s.current.div=rn(s.current.div);
+  /* trackV 1: cada jugador sabe en qué temporada llegó (since) y en cuál se fue (leftIn), para que borrar
+     la última temporada deje la plantilla como estaba. Para datos de antes se deduce de sus temporadas,
+     y la media de cada jugador vuelve a ser la de la última temporada apuntada en la que sale. */
+  if(!s.trackV){
+    const lastWith=id=>[...s.seasons].reverse().find(x=>x.stats[id]);
+    s.players.forEach(p=>{
+      if(!p.since){const f=s.seasons.find(x=>x.stats[p.id]);p.since=f?f.label:s.current.label;}
+      if(p.status&&!p.leftIn){const l=lastWith(p.id);p.leftIn=l?l.label:s.current.label;}
+      const ls=s.seasons[s.seasons.length-1]; if(ls&&ls.stats[p.id]&&!p.status)p.ovr=ls.stats[p.id][3];
+    });
+    s.trackV=1;
+  }
   return s;
 }
-function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.parse(r));}catch(e){}return clone(DEMO);}
+function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.parse(r));}catch(e){}return migrate(clone(DEMO));}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 let S=load();
 const UI={htab:'g',scope:'all',open:null,bill:'month',rec:0,psea:'cur',edit:null,vtab:'col'};
@@ -1590,7 +1602,7 @@ function renderPlantilla(){
     <div><h1>Plantilla</h1><p>${sub}</p></div>
     <div class="ph-actions">
       <select class="select season-pick" data-psea aria-label="Ver la plantilla de otra temporada">${opts}</select>
-      ${past?'':`<button class="btn secondary" data-action="kit">${ic('brush')}Camiseta</button><button class="btn primary" data-action="add-player">${ic('plus')}Añadir jugador</button>`}
+      ${past?'':`<button class="btn secondary" data-action="kit">${ic('brush')}Camiseta</button>`}
     </div>
   </div>
   ${past?`<div class="past-bar">${ic('calendar')}<span>Estás viendo la plantilla de la <b>${past.label}</b>, con las medias que tenían ese año.</span>${past.titles.map(t=>`<span class="tchip">${trophyMini(t)}${esc(t)}</span>`).join('')}<button class="link" data-action="psea-cur">Volver a la actual ${ic('arrowRight')}</button></div>`:''}
@@ -1604,7 +1616,7 @@ function renderPlantilla(){
     </div>
     <div class="card">
       <div class="card-h"><h2>Banquillo</h2><span class="sub">${bench.length} jugadores</span></div>
-      ${bench.map(p=>`<div class="bench-row ${p.loan?'is-loan':''}" ${p.loan?'':`data-drag="bench" data-drag-id="${p.id}"`}><button class="bench-main" data-action="player" data-id="${p.id}">${miniShirt(p)}<div class="who"><b>${esc(p.name)}</b><small>${benchSub(p)}</small></div>${p.loan?loanTag:''}${tags(p)}${posb(p.pos)}${rate(p.ovr)}</button>${p.loan?'':`<span class="grip" aria-hidden="true">${ic('grip')}</span>`}</div>`).join('')||(sq.length?'<p class="hint">Sin suplentes.</p>':`<div class="squad-empty"><b>Tu plantilla está vacía</b><p>Añade a tus jugadores aquí o al apuntar tu primera temporada. Los 11 primeros forman el once.</p><button class="btn primary sm" data-action="add-player">${ic('userPlus')}Añadir jugador</button></div>`)}
+      ${bench.map(p=>`<div class="bench-row ${p.loan?'is-loan':''}" ${p.loan?'':`data-drag="bench" data-drag-id="${p.id}"`}><button class="bench-main" data-action="player" data-id="${p.id}">${miniShirt(p)}<div class="who"><b>${esc(p.name)}</b><small>${benchSub(p)}</small></div>${p.loan?loanTag:''}${tags(p)}${posb(p.pos)}${rate(p.ovr)}</button>${p.loan?'':`<span class="grip" aria-hidden="true">${ic('grip')}</span>`}</div>`).join('')||(sq.length?'<p class="hint">Sin suplentes.</p>':`<div class="squad-empty"><b>Tu plantilla está vacía</b><p>Los jugadores se añaden al apuntar cada temporada. Los 11 primeros forman el once.</p><button class="btn primary sm" data-nav="apuntar">${ic('userPlus')}Apuntar temporada</button></div>`)}
       ${pref&&pref.length?`<button class="link xi-auto" data-action="xi-auto">${ic('refresh')}Volver al once automático (por media)</button>`:''}
     </div>
   </div>`;
@@ -2175,7 +2187,7 @@ function openNewCareer(){
 }
 function createCareer(fd){
   const name=(fd.get('club')||'').trim(); if(!name){$('#c-club').focus();return;}
-  S={awardsV:2,manager:S.manager||'Míster',settings:S.settings,club:{name},
+  S={awardsV:2,trackV:1,manager:S.manager||'Míster',settings:S.settings,club:{name},
     kit:{pattern:'plain',c1:'#16a34a',c2:'#ffffff',trim:'#0f5132',num:'#ffffff'},gkKit:clone(DEMO.gkKit),
     current:{label:fd.get('season'),div:fd.get('div')},formation:'4-3-3',players:[],seasons:[]};
   Object.assign(UI,{htab:'g',scope:'all',open:null,psea:'cur',edit:null,vtab:'col',rec:0,awt:0});
@@ -2287,7 +2299,7 @@ function openDeleteSeason(){
   openModal(`${mHead(`¿Borrar la temporada ${se.label}?`,'')}
   <div class="del-warn">${ic('trash')}<div>
     <p>Se borrará todo lo apuntado en esa temporada: posición, títulos, premios individuales y los partidos, goles y asistencias de los jugadores.</p>
-    <p>Los jugadores siguen en el club.${last?` Como es la última apuntada, la <b>${se.label}</b> volverá a ser la temporada en juego para que puedas apuntarla de nuevo.`:''}</p>
+    ${last?`<p>Como es la última apuntada, <b>la plantilla vuelve a como estaba antes de apuntarla</b>: con las medias de antes, vuelven los que se fueron en ella y se quitan los fichajes nuevos de esa temporada. La <b>${se.label}</b> volverá a estar en juego para que puedas apuntarla de nuevo.</p>`:'<p>Los jugadores siguen en el club.</p>'}
     <p><b>No se puede deshacer.</b></p>
   </div></div>
   <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn danger" data-action="season-del-ok">${ic('trash')}Borrar temporada</button></div>`);
@@ -2296,8 +2308,24 @@ function deleteSeason(){
   const i=UI.edit, se=S.seasons[i]; if(!se)return;
   const last=i===S.seasons.length-1;
   S.seasons.splice(i,1);
-  /* si era la última, esa temporada vuelve a estar en juego (y la plantilla recupera la edad que tenía) */
-  if(last){S.current={label:se.label,div:se.div};squad().forEach(p=>{p.age=Math.max(15,p.age-1);});}
+  /* si era la última, esa temporada vuelve a estar en juego y la plantilla queda como estaba antes de apuntarla */
+  if(last){
+    const L=se.label, pv=se.prev, prevSe=S.seasons[S.seasons.length-1], inAny=id=>S.seasons.some(x=>x.stats[id]);
+    /* edad: un año menos a quien lo cumplió al guardarla */
+    const aged=new Set(pv&&pv.aged?pv.aged:squad().filter(p=>se.stats[p.id]||inAny(p.id)).map(p=>p.id));
+    S.players.forEach(p=>{if(aged.has(p.id))p.age=Math.max(15,p.age-1);});
+    /* fichajes nuevos de esa temporada que no salen en ninguna otra: fuera */
+    S.players=S.players.filter(p=>!(p.since===L&&!inAny(p.id)));
+    /* los que se fueron en esa temporada vuelven */
+    S.players.forEach(p=>{if(p.status&&p.leftIn===L){delete p.status;delete p.leftIn;}});
+    /* medias de antes */
+    S.players.forEach(p=>{if(pv&&pv.ovr&&pv.ovr[p.id]!=null)p.ovr=pv.ovr[p.id];else if(prevSe&&prevSe.stats[p.id])p.ovr=prevSe.stats[p.id][3];});
+    /* once y formación de antes */
+    const xs=pv?pv.xiSlots:prevSe&&prevSe.xiSlots, fm=pv?pv.formation:prevSe&&prevSe.formation;
+    if(xs)S.xiSlots=xs.slice(); else delete S.xiSlots;
+    if(fm)S.formation=fm;
+    S.current={label:L,div:se.div};
+  }
   UI.open=null; UI.psea='cur'; UI.scope='all'; UI.edit=null;
   save(); closeModal(); go('temporadas'); toast(`Temporada ${se.label} borrada`,'trash');
 }
@@ -2352,6 +2380,9 @@ const FORMS={
     /* todos los jugadores que salen en el formulario (once, banquillo, añadidos y fichajes nuevos) */
     const list=[...fd.keys()].filter(k=>k.startsWith('pj_')).map(k=>byId(k.slice(3))).filter(Boolean);
     if(!list.length){toast('Añade al menos un jugador a la temporada','info');const b=$('.xi-empty .btn');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});return;}
+    /* al apuntar una temporada nueva se guarda cómo estaba la plantilla antes (medias, once y formación),
+       para poder dejarla igual si luego se borra esa temporada */
+    const snap=se?null:{ovr:Object.fromEntries(S.players.map(p=>[p.id,p.ovr])),xiSlots:S.xiSlots?S.xiSlots.slice():null,formation:S.formation||null};
     const stats={};
     list.forEach(p=>{
       if(!fd.has('pj_'+p.id))return;
@@ -2361,7 +2392,7 @@ const FORMS={
     });
     const awP=fd.getAll('aw_p'), awards=fd.getAll('aw_a').map((a,i)=>({a,id:+awP[i]})).filter(w=>w.a&&w.id);
     /* bajas marcadas con la × (vendido, retirado, agente libre): dejan la plantilla del club */
-    Object.entries(FORM_BAJAS).forEach(([id,s])=>{const p=byId(id);if(p)p.status=s;});
+    Object.entries(FORM_BAJAS).forEach(([id,s])=>{const p=byId(id);if(p){p.status=s;p.leftIn=se?se.label:S.current.label;}}); /* leftIn: temporada en la que se fue */
     if(se){
       Object.assign(se,{div:fd.get('div'),pos,titles:fd.getAll('titles'),stats,awards,loans:[...FORM_LOANS].filter(id=>stats[id]),formation:FORM_F,xiSlots:FORM_SLOTS.slice()}); delete se.xi;
       /* si es la última temporada apuntada, su media pasa a ser la media actual del jugador */
@@ -2371,8 +2402,9 @@ const FORMS={
       return;
     }
     const label=S.current.label;
-    S.seasons.push({label,div:fd.get('div'),pos,titles:fd.getAll('titles'),stats,awards,loans:[...FORM_LOANS].filter(id=>stats[id]),formation:FORM_F,xiSlots:FORM_SLOTS.slice()});
+    S.seasons.push({label,div:fd.get('div'),pos,titles:fd.getAll('titles'),stats,awards,loans:[...FORM_LOANS].filter(id=>stats[id]),formation:FORM_F,xiSlots:FORM_SLOTS.slice(),prev:snap});
     S.xiSlots=FORM_SLOTS.slice(); delete S.xi; /* la temporada siguiente empieza con el mismo once y las mismas posiciones */
+    snap.aged=squad().map(p=>p.id);
     squad().forEach(p=>p.age++);
     S.current={label:nextLabel(label),div:fd.get('div')};
     save();UI.open=S.seasons.length-1;go(formBack());
@@ -2382,7 +2414,9 @@ const FORMS={
   player(fd){
     const name=(fd.get('name')||'').trim(); if(!name){$('#p-name').focus();return;}
     const ovr=clamp(parseInt(fd.get('ovr'))||70,40,99);
-    const p={id:Date.now(),name,pos:fd.get('pos'),num:clamp(parseInt(fd.get('num'))||99,1,99),nat:NAT[fd.get('nat')]?fd.get('nat'):'ESP',age:clamp(parseInt(fd.get('age'))||20,15,45),ovr,cantera:fd.get('cantera')==='on'};
+    /* since: temporada en la que llegó al club (la que se está apuntando/editando o, desde Plantilla, la que está en juego) */
+    const since=fd.get('ctx')==='season'&&UI.edit!=null&&S.seasons[UI.edit]?S.seasons[UI.edit].label:S.current.label;
+    const p={id:Date.now(),name,pos:fd.get('pos'),num:clamp(parseInt(fd.get('num'))||99,1,99),nat:NAT[fd.get('nat')]?fd.get('nat'):'ESP',age:clamp(parseInt(fd.get('age'))||20,15,45),ovr,cantera:fd.get('cantera')==='on',since};
     S.players.push(p); save(); closeModal();
     const again=fd.get('again')==='1', inForm=fd.get('ctx')==='season';
     /* desde el formulario de temporada: aparece en el once (si aún tiene huecos) o en el banquillo para rellenar sus datos */
@@ -2471,7 +2505,7 @@ const ACTIONS={
   bill(b){UI.bill=b.dataset.t;rerender();},
   'toggle-season'(b){const i=+b.dataset.i;UI.open=UI.open===i?null:i;rerender();},
   player(b){openPlayer(b.dataset.id);},
-  baja(b){const p=byId(b.dataset.id);p.status=$('#bajaSel').value;save();closeModal();rerender();toast(`${p.name}: ${p.status.toLowerCase()}`,'check');},
+  baja(b){const p=byId(b.dataset.id);p.status=$('#bajaSel').value;p.leftIn=S.current.label;save();closeModal();rerender();toast(`${p.name}: ${p.status.toLowerCase()}`,'check');},
   'add-player'(){openAddPlayer(false);},
   'sign-player'(){openAddPlayer(true);},
   'row-del'(b){openBajaPop(b);},
@@ -2510,7 +2544,7 @@ const ACTIONS={
   'modal-bd'(el,e){if(e.target===el)closeModal();},
   'stripe-go'(){closeModal();toast('Boceto: aquí se abriría Stripe Checkout','card');},
   'new-career'(){closeModal();go('premium');toast('Varias carreras a la vez es parte de Pro','crown');},
-  reset(){const st=S.settings;S=clone(DEMO);if(st)S.settings=st;save();setKitVar();refreshHeader();closeModal();UI.open=null;go('inicio');toast('Datos de ejemplo restablecidos');},
+  reset(){const st=S.settings;S=migrate(clone(DEMO));if(st)S.settings=st;save();setKitVar();refreshHeader();closeModal();UI.open=null;go('inicio');toast('Datos de ejemplo restablecidos');},
   'set-lang'(){toast('La app ya está en español. Los demás idiomas llegarán pronto','info');},
   'backup-down':downloadBackup,
   'backup-ok'(){
