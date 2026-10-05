@@ -662,6 +662,50 @@ button.m-row:hover{background:var(--surface-2)}
 .acct{display:flex;align-items:center;gap:14px;margin-bottom:16px}
 .acct .avatar{width:48px;height:48px;font-size:16px}
 .avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+/* ---------- Configuración ---------- */
+.set-wrap{max-width:760px}
+.set-card{margin-bottom:16px}
+.set-card .card-h h2{display:flex;align-items:center;gap:8px}
+.set-card .card-h h2 .ic{width:18px;height:18px;color:var(--green)}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
+.set-card .card-h+.set-row{border-top:0;padding-top:4px}
+.set-row .txt{min-width:0;cursor:default}
+.set-row label.txt{cursor:pointer}
+.set-row .txt b{display:block;font-weight:600;font-size:14.5px}
+.set-row .txt span{display:block;font-size:13px;color:var(--muted);margin-top:1px}
+.set-row .ctl{flex:none;display:flex;justify-content:flex-end}
+.set-row .ctl .input{width:240px;height:40px}
+.set-row .ctl .set-short{width:84px;text-transform:uppercase;text-align:center;font-weight:700;letter-spacing:.06em}
+.set-row .ctl label.btn{cursor:pointer}
+.set-danger{border-color:#f1c4ca}
+.set-danger .card-h h2 .ic{color:var(--red)}
+.langs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.lang{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;color:var(--text);background:#fff;text-align:left}
+.lang .flag{font-size:18px}
+.lang .ln{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.lang .ln b{font-weight:600}
+.lang .ic{width:18px;height:18px;margin-left:auto;color:var(--green)}
+.lang.on{border-color:var(--green);background:var(--green-soft);color:var(--green-d)}
+.lang[disabled]{color:var(--muted);background:var(--surface-2);cursor:default}
+.lang[disabled] .flag{opacity:.55}
+.lang small{font-size:11.5px;font-weight:500;color:var(--muted)}
+.lang.on small{color:var(--green-d)}
+/* interruptor */
+.switch{-webkit-appearance:none;appearance:none;position:relative;width:46px;height:26px;border-radius:99px;background:var(--line-2);cursor:pointer;transition:background .2s;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.switch:checked{background:var(--green)}
+.switch:checked::after{transform:translateX(20px)}
+.switch:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.warn-line{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--gold-soft);border:1px solid var(--gold-line);color:var(--text-2)}
+@media (max-width:640px){
+  .set-row{flex-wrap:wrap}
+  .set-row .ctl{width:100%}
+  .set-row .ctl .input{width:100%}
+  .set-row .ctl .set-short{width:84px}
+  .set-row .ctl:has(.switch){width:auto}
+}
+/* "Reducir animaciones" (Configuración) */
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
 .acct b{display:block;font-size:16px}
 .acct span{font-size:13px;color:var(--muted)}
 .tsel-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -917,6 +961,10 @@ const I={
   home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.9.7 3.2 2.4 3.5 5.2"/>',
   trash:'<path d="M4 7h16M10 11v6M14 11v6M5.5 7l1 12.2A2 2 0 0 0 8.5 21h7a2 2 0 0 0 2-1.8L18.5 7M9 7V4.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V7"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  download:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  upload:'<path d="M12 16V5M7 10l5-5 5 5M5 20h14"/>',
   userPlus:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5M19 8v6M16 11h6"/>',
   calendar:'<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
   calcheck:'<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M9 15l2 2 4-4"/>',
@@ -1805,7 +1853,7 @@ function renderPremium(){
   </div>`;
 }
 
-const PAGES={inicio:renderInicio,plantilla:renderPlantilla,temporadas:renderTemporadas,historia:renderHistoria,apuntar:renderApuntar,premium:renderPremium};
+const PAGES={inicio:renderInicio,plantilla:renderPlantilla,temporadas:renderTemporadas,historia:renderHistoria,apuntar:renderApuntar,premium:renderPremium,config:renderConfig};
 const NAV={inicio:['home','Inicio'],plantilla:['users','Plantilla'],temporadas:['calendar','Temporadas'],historia:['book','Historia']};
 
 /* ---------- Pantallas y navegación ---------- */
@@ -2011,7 +2059,7 @@ function openAccount(){
   openModal(`${mHead('Tu cuenta','')}
   <div class="acct"><span class="avatar">${avatarHTML()}</span><div><b>${esc(S.manager)}</b><span>${AUTH_USER&&AUTH_USER.email?esc(AUTH_USER.email):'Cuenta de Google'} · Plan Amateur (gratis)</span></div></div>
   <button class="m-row" data-nav="premium"><span class="icon-btn" style="background:var(--gold-soft);color:var(--gold)">${ic('crown')}</span><div><b>Ver planes Pro</b><span>Carreras ilimitadas y más</span></div></button>
-  <button class="m-row" data-action="new-user"><span class="icon-btn">${ic('userPlus')}</span><div><b>Empezar de cero como usuario nuevo</b><span>Carrera vacía, sin jugadores · solo en este boceto</span></div></button>
+  <button class="m-row" data-nav="config"><span class="icon-btn">${ic('gear')}</span><div><b>Configuración</b><span>Idioma, tu club, preferencias y tus datos</span></div></button>
   <button class="m-row" data-action="reset"><span class="icon-btn">${ic('refresh')}</span><div><b>Restablecer datos de ejemplo</b><span>Solo en este boceto</span></div></button>
   <button class="m-row" data-action="logout"><span class="icon-btn">${ic('logout')}</span><div><b>Cerrar sesión</b></div></button>`);
 }
@@ -2024,18 +2072,93 @@ function openNewCareer(){
     <div class="field"><label for="c-div">Liga</label><select class="input" id="c-div" name="div">${LEAGUES.map(([c,ls])=>`<optgroup label="${c}">${ls.map(d=>`<option>${d}</option>`).join('')}</optgroup>`).join('')}</select></div>
     <div class="field"><label for="c-season">Temporada en la que empiezas</label><select class="input" id="c-season" name="season">${seasons.map(s=>`<option ${s==='2026/27'?'selected':''}>${s}</option>`).join('')}</select></div>
   </form>
+  ${S.players.length||S.seasons.length?`<p class="hint warn-line">${ic('info')}Se sustituirá tu carrera actual (<b>${esc(S.club.name)}</b>) en este navegador. Si quieres guardarla, descarga antes una copia en Configuración › Tus datos.</p>`:''}
   <p class="hint" style="margin-top:12px">${ic('info')}La camiseta y la formación las cambias luego en Plantilla.</p>
   <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="career-create">${ic('check')}Crear carrera</button></div>`);
   $('#c-club').focus();
 }
 function createCareer(fd){
   const name=(fd.get('club')||'').trim(); if(!name){$('#c-club').focus();return;}
-  S={awardsV:2,manager:S.manager||'Míster',club:{name},
+  S={awardsV:2,manager:S.manager||'Míster',settings:S.settings,club:{name},
     kit:{pattern:'plain',c1:'#16a34a',c2:'#ffffff',trim:'#0f5132',num:'#ffffff'},gkKit:clone(DEMO.gkKit),
     current:{label:fd.get('season'),div:fd.get('div')},formation:'4-3-3',players:[],seasons:[]};
   Object.assign(UI,{htab:'g',scope:'all',open:null,psea:'cur',edit:null,vtab:'col',rec:0,awt:0});
   save(); setKitVar(); refreshHeader(); closeModal(); screen('app'); go('inicio');
   toast(`Carrera creada: ${name}`,'check');
+}
+
+/* ---------- Configuración ----------
+   Idioma, perfil y club, preferencias (vibración y animaciones), copia de seguridad y empezar de cero.
+   Se guarda en S.settings. */
+const SET=()=>S.settings||(S.settings={lang:'es',vibrate:true,reduceMotion:false});
+const LANGS=[['es','es','Español'],['en','gb','English'],['pt','pt','Português'],['it','it','Italiano'],['fr','fr','Français'],['de','de','Deutsch']];
+/* vibración del móvil al arrastrar jugadores (se puede apagar) */
+const vib=p=>{if(SET().vibrate!==false&&navigator.vibrate)navigator.vibrate(p);};
+/* "Reducir animaciones": quita movimientos y para los carruseles automáticos */
+const applyPrefs=()=>document.documentElement.classList.toggle('reduce-motion',!!SET().reduceMotion);
+function renderConfig(){
+  const st=SET(), row=(lab,desc,ctl,id)=>`<div class="set-row">${id?`<label class="txt" for="${id}">`:'<div class="txt">'}<b>${lab}</b><span>${desc}</span>${id?'</label>':'</div>'}<div class="ctl">${ctl}</div></div>`;
+  return `
+  <button class="back" data-nav="inicio">${ic('arrowLeft')}Volver</button>
+  <div class="ph"><div><h1>Configuración</h1><p>Ajustes de tu cuenta y de tu carrera.</p></div></div>
+  <div class="set-wrap">
+    <section class="card set-card">
+      <div class="card-h"><h2>${ic('globe')}Idioma</h2></div>
+      <div class="langs">${LANGS.map(([c,f,n])=>c==='es'
+        ?`<button class="lang ${st.lang===c?'on':''}" data-action="set-lang" data-l="${c}" aria-pressed="${st.lang===c}"><span class="flag fi fi-${f}"></span><span class="ln"><b>${n}</b>${st.lang===c?'<small>Activo</small>':''}</span>${st.lang===c?ic('check'):''}</button>`
+        :`<button class="lang" disabled><span class="flag fi fi-${f}"></span><span class="ln"><b>${n}</b><small>Próximamente</small></span></button>`).join('')}</div>
+    </section>
+    <section class="card set-card">
+      <div class="card-h"><h2>${ic('users')}Tu perfil y tu club</h2></div>
+      ${row('Nombre del míster','Sale en la app y en tu cuenta',`<input class="input" id="set-manager" data-set="manager" value="${esc(S.manager)}" maxlength="40">`,'set-manager')}
+      ${row('Nombre del club','El de tu modo carrera',`<input class="input" id="set-club" data-set="club" value="${esc(S.club.name)}" maxlength="40">`,'set-club')}
+      ${row('Siglas del escudo','Hasta 3 letras',`<input class="input set-short" id="set-short" data-set="short" value="${esc(clubShort())}" maxlength="3">`,'set-short')}
+      ${row('Camiseta','Colores y diseño de la equipación',`<button class="btn secondary sm" data-action="kit">${ic('brush')}Cambiar camiseta</button>`)}
+    </section>
+    <section class="card set-card">
+      <div class="card-h"><h2>${ic('gear')}Preferencias</h2></div>
+      ${row('Vibración','En el móvil, al arrastrar jugadores para hacer cambios',`<input type="checkbox" class="switch" id="set-vib" data-set="vibrate" ${st.vibrate!==false?'checked':''}>`,'set-vib')}
+      ${row('Reducir animaciones','Quita movimientos y para los carruseles automáticos',`<input type="checkbox" class="switch" id="set-anim" data-set="reduceMotion" ${st.reduceMotion?'checked':''}>`,'set-anim')}
+    </section>
+    <section class="card set-card">
+      <div class="card-h"><h2>${ic('download')}Tus datos</h2></div>
+      ${row('Descargar copia de seguridad','Un archivo con toda tu carrera, por si cambias de navegador o de ordenador',`<button class="btn secondary sm" data-action="backup-down">${ic('download')}Descargar</button>`)}
+      ${row('Cargar copia de seguridad','Sustituye la carrera actual por la del archivo',`<label class="btn secondary sm">${ic('upload')}Cargar<input type="file" accept=".json,application/json" data-backup hidden></label>`)}
+    </section>
+    <section class="card set-card set-danger">
+      <div class="card-h"><h2>${ic('userPlus')}Empezar de cero</h2></div>
+      ${row('Crear una carrera nueva','Empiezas con la plantilla vacía, como un usuario nuevo. La carrera actual se borra de este navegador.',`<button class="btn danger-soft sm" data-action="new-user">Empezar de cero</button>`)}
+    </section>
+  </div>`;
+}
+/* cambios de los campos de Configuración */
+function applySetting(el){
+  const k=el.dataset.set, st=SET(), v=el.type==='checkbox'?el.checked:el.value.trim();
+  if(k==='manager'){if(!v){el.value=S.manager;return;}S.manager=v;st.managerCustom=true;}
+  if(k==='club'){if(!v){el.value=S.club.name;return;}S.club.name=v;}
+  if(k==='short'){if(v)S.club.short=v.toUpperCase();else delete S.club.short;el.value=clubShort();}
+  if(k==='vibrate')st.vibrate=v;
+  if(k==='reduceMotion'){st.reduceMotion=v;applyPrefs();}
+  save(); refreshHeader(); toast('Guardado','check');
+}
+function downloadBackup(){
+  const slug=S.club.name.normalize('NFKD').replace(/[^\w\s-]/g,'').trim().toLowerCase().replace(/\s+/g,'-')||'carrera';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));
+  a.download=`career-board-${slug}-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('Copia descargada','download');
+}
+let PENDING_BACKUP=null;
+async function readBackup(file){
+  try{
+    const d=JSON.parse(await file.text());
+    if(!d||!d.club||!Array.isArray(d.players)||!Array.isArray(d.seasons))throw new Error('formato');
+    PENDING_BACKUP=d;
+    openModal(`${mHead('¿Cargar esta copia?','')}
+    <div class="del-warn">${ic('upload')}<div><p>Copia de <b>${esc(d.club.name||'')}</b>: ${d.seasons.length} temporadas y ${d.players.length} jugadores.</p><p>Sustituirá a la carrera actual (<b>${esc(S.club.name)}</b>) en este navegador.</p></div></div>
+    <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="backup-ok">${ic('check')}Cargar copia</button></div>`);
+  }catch(e){toast('Ese archivo no es una copia de Career Board','info');}
 }
 let draft=null;
 function kitModal(){
@@ -2172,7 +2295,8 @@ const authMsg=e=>AUTH_MSG[e&&e.code]||`No se pudo entrar con Google (${(e&&e.cod
 function setGoogleBtn(loading){const g=$('.btn-google');g.classList.toggle('loading',loading);g.querySelector('span').textContent=loading?'Conectando con Google…':'Continuar con Google';}
 /* entra en la app con el usuario de Google (su nombre pasa a ser el del míster) */
 function enterApp(u,quiet){
-  if(u&&u.displayName&&S.manager!==u.displayName){S.manager=u.displayName;save();}
+  /* el nombre de Google pasa a ser el del míster, salvo que lo hayas cambiado en Configuración */
+  if(u&&u.displayName&&!SET().managerCustom&&S.manager!==u.displayName){S.manager=u.displayName;save();}
   refreshHeader(); closeModal(); screen('app'); go('inicio');
   if(!quiet)toast(`Bienvenido, míster ${S.manager.split(' ')[0]}`);
 }
@@ -2255,7 +2379,15 @@ const ACTIONS={
   'modal-bd'(el,e){if(e.target===el)closeModal();},
   'stripe-go'(){closeModal();toast('Boceto: aquí se abriría Stripe Checkout','card');},
   'new-career'(){closeModal();go('premium');toast('Varias carreras a la vez es parte de Pro','crown');},
-  reset(){S=clone(DEMO);save();setKitVar();refreshHeader();closeModal();UI.open=null;go('inicio');toast('Datos de ejemplo restablecidos');}
+  reset(){const st=S.settings;S=clone(DEMO);if(st)S.settings=st;save();setKitVar();refreshHeader();closeModal();UI.open=null;go('inicio');toast('Datos de ejemplo restablecidos');},
+  'set-lang'(){toast('La app ya está en español. Los demás idiomas llegarán pronto','info');},
+  'backup-down':downloadBackup,
+  'backup-ok'(){
+    if(!PENDING_BACKUP)return;
+    S=migrate(Object.assign({awardsV:2,formation:'4-3-3',kit:clone(DEMO.kit),gkKit:clone(DEMO.gkKit),current:clone(DEMO.current),manager:S.manager,settings:S.settings},PENDING_BACKUP));
+    PENDING_BACKUP=null; Object.assign(UI,{open:null,psea:'cur',edit:null,scope:'all',rec:0,awt:0});
+    save(); setKitVar(); refreshHeader(); applyPrefs(); closeModal(); go('inicio'); toast(`Copia cargada: ${S.club.name}`,'check');
+  }
 };
 
 document.addEventListener('click',e=>{
@@ -2273,6 +2405,8 @@ document.addEventListener('change',e=>{
   if(e.target.matches('[data-psea]')){UI.psea=e.target.value;rerender();}
   if(e.target.matches('[data-formation]'))changeFormation(e.target.value);
   if(e.target.id==='p-nat')$('#p-nat-flag').innerHTML=flag(e.target.value);
+  if(e.target.matches('[data-set]'))applySetting(e.target);
+  if(e.target.matches('[data-backup]')&&e.target.files[0]){readBackup(e.target.files[0]);e.target.value='';}
   /* al cambiar de liga en el formulario, los títulos pasan a ser los de ese país (se quitan los que ya no valen) */
   if(e.target.id==='s-div'){const box=$('#tchks'),div=e.target.value,ok=titlesFor(div);
     const keep=[...box.querySelectorAll('input:checked')].map(c=>c.value).filter(t=>ok.includes(t));
@@ -2282,6 +2416,7 @@ document.addEventListener('input',e=>{if(e.target.closest('#seasonForm'))formAvg
 document.addEventListener('input',e=>{if(e.target.matches('[data-kit]')&&draft){draft[e.target.dataset.kit]=e.target.value;const p=$('#kitPrev');if(p)p.innerHTML=kitPreview();}});
 /* carrusel de récords: avanza cuando el puntito activo termina de rellenarse, y se puede deslizar con el dedo */
 document.addEventListener('animationend',e=>{
+  if(SET().reduceMotion)return; /* con "Reducir animaciones" los carruseles no pasan solos */
   if(e.target.matches('.rec-dots button.on i'))setRec(UI.rec+1);
   if(e.target.matches('.awt-bar i'))setAwt((UI.awt||0)+1);
 });
@@ -2316,7 +2451,7 @@ function startDrag(x,y){
   /* un titular también se puede soltar sobre otro titular para cambiarles la posición */
   DRAG.targets=[...scope.querySelectorAll('[data-drag-id]')].filter(t=>t!==p.item&&(dragGroup(t)!==p.group||p.group==='xi'));
   DRAG.targets.forEach((t,i)=>{t.classList.add('drop-cand');t.style.setProperty('--jd',`${-(i%5)*.06}s`);});
-  if(navigator.vibrate)navigator.vibrate(15);
+  vib(15);
   moveDrag(x,y); scrollLoop();
 }
 function moveDrag(x,y){
@@ -2325,7 +2460,7 @@ function moveDrag(x,y){
   const el=document.elementFromPoint(x,y), t=el&&el.closest('.drop-cand');
   if(DRAG.over!==t){
     if(DRAG.over)DRAG.over.classList.remove('drop-over');
-    if(t){t.classList.add('drop-over');if(navigator.vibrate)navigator.vibrate(8);}
+    if(t){t.classList.add('drop-over');vib(8);}
     DRAG.over=t; DRAG.ghost.classList.toggle('ok',!!t);
     DRAG.ghost.querySelector('span').textContent=ghostText(DRAG.src,t);
   }
@@ -2348,7 +2483,7 @@ function endDrag(){
   if(!t)return;
   const a=s.id, b=+t.dataset.dragId;
   const ok=s.item.closest('#seasonForm')?formSwapRows(a,b):swapInView(a,b);
-  if(ok&&navigator.vibrate)navigator.vibrate([12,40,20]);
+  if(ok)vib([12,40,20]);
 }
 document.addEventListener('pointerdown',e=>{
   if(e.button>0||DRAG.on)return;
@@ -2396,6 +2531,7 @@ document.addEventListener('keydown',e=>{
   document.querySelectorAll('.bn-item').forEach(el=>{const [i,t]=NAV[el.dataset.nav];el.innerHTML=ic(i)+`<span>${t}</span>`;});
   refreshHeader();
   setKitVar();
+  applyPrefs();
   buildIntroVisuals();
   setSlide(0);
 })();
