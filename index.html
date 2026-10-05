@@ -738,6 +738,20 @@ button.m-row:hover{background:var(--surface-2)}
 .pat .shirt{width:38px;filter:none}
 .pat.on{border-color:var(--green);background:var(--green-soft);color:var(--green-d)}
 .colors{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+/* editor del escudo */
+.crest-prev{display:flex;align-items:center;gap:22px;padding:18px 22px;border-radius:16px;background:radial-gradient(circle at 30% 40%,#fff 0,var(--surface-2) 70%);border:1px solid var(--line)}
+.cp-big .crest{width:96px;height:auto;filter:drop-shadow(0 8px 14px rgba(16,26,20,.18))}
+.cp-side{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cp-head{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:14px;min-width:0}
+.cp-head .crest{width:22px;height:auto;flex:none}
+.cp-head b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp-side small{font-size:12px;color:var(--muted)}
+.crest-opts .crest{width:34px;height:auto}
+.crest-opts .sym-thumb{width:34px;height:34px;margin:2px 0 4px}
+.crest-short{width:110px;text-transform:uppercase;text-align:center;font-weight:700;letter-spacing:.08em}
+.crest-fromkit{margin-top:10px}
+.set-crest{display:inline-flex;margin-right:10px}
+.set-crest .crest{width:30px;height:auto}
 .col-in{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:var(--text-2)}
 .col-in input{width:100%;height:42px;border-radius:10px;border:1px solid var(--line-2);background:#fff;padding:4px;cursor:pointer}
 .presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:4px;max-height:232px;overflow-y:auto;padding:2px 4px 2px 0}
@@ -1011,15 +1025,57 @@ const I={
 const ic=(n,c='')=>`<svg class="ic ${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]||''}</svg>`;
 const LOGO='<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="url(#gLogo)"/><rect x="8" y="10" width="24" height="20" rx="3" fill="none" stroke="#fff" stroke-width="2.6"/><path d="M20 10v20" stroke="#fff" stroke-width="2.2"/><circle cx="20" cy="20" r="3.8" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="13.5" cy="15.5" r="1.9" fill="#fff"/><circle cx="26.5" cy="24.5" r="1.9" fill="#fff"/></svg>';
 
-/* Escudo provisional del club: los colores de su camiseta y sus iniciales (p. ej. Málaga CF → MCF) */
+/* ---------- Escudo del club ----------
+   Se edita en Configuración (forma, diseño, símbolo, colores y siglas) y se guarda en S.crest.
+   Mientras no se edite, usa los colores de la camiseta. Es un escudo propio: no se usan escudos reales. */
 const isLight=hex=>{const n=parseInt((hex||'#000').slice(1),16);return ((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/1000>170;};
 const clubShort=()=>S.club.short||S.club.name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'CB';
-function crest(){
-  const k=S.kit, band=k.trim, body=k.pattern==='stripes'?`<rect width="40" height="46" fill="${k.c2}"/>${[5,17,29].map(x=>`<rect x="${x}" width="6" height="46" fill="${k.c1}"/>`).join('')}`
-    :k.pattern==='hoops'?`<rect width="40" height="46" fill="${k.c2}"/>${[17,29,41].map(y=>`<rect y="${y}" width="40" height="6" fill="${k.c1}"/>`).join('')}`
-    :`<rect width="40" height="46" fill="${k.c1}"/>`;
-  const txt=isLight(band)?'#1b2a22':'#fff', s=clubShort();
-  return `<svg class="crest" viewBox="0 0 40 46" aria-hidden="true"><g clip-path="url(#crestClip)">${body}<rect width="40" height="13" fill="${band}"/></g><path d="M20 1.5 38 6.5V22c0 11-7.6 18.6-18 22.5C9.6 40.6 2 33 2 22V6.5z" fill="none" stroke="${band}" stroke-width="2.6"/><text x="20" y="10.6" text-anchor="middle" font-family="Barlow Condensed,Arial Narrow,sans-serif" font-weight="800" font-size="${s.length>2?8.2:9.4}" fill="${txt}" letter-spacing=".6">${esc(s)}</text><circle cx="20" cy="27" r="6.2" fill="${band}" stroke="#fff" stroke-width="1.6"/><path d="m20 23.2 1.2 2.5 2.7.4-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.4z" fill="#f4c84a"/></svg>`;
+/* forma: contorno, franja con las siglas [y, alto, y del texto] y medallón del símbolo [x, y, radio] */
+const CREST_SHAPES={
+  shield:{n:'Escudo',d:'M20 1.5 38 6.5V22c0 11-7.6 18.6-18 22.5C9.6 40.6 2 33 2 22V6.5z',band:[0,13,10.6],med:[20,27,6.2]},
+  heater:{n:'Clásico',d:'M3 2.5h34V19c0 13-7.8 20.6-17 24.8C10.8 39.6 3 32 3 19z',band:[0,13,10.6],med:[20,26.5,6.2]},
+  round:{n:'Redondo',d:'M20 4a19 19 0 1 1 0 38 19 19 0 1 1 0-38z',band:[27,9,34],med:[20,16.5,6]},
+  oval:{n:'Ovalado',d:'M20 1.8c9.6 0 17 9.4 17 21.2S29.6 44.2 20 44.2 3 34.8 3 23 10.4 1.8 20 1.8z',band:[28,9,35],med:[20,16,6]},
+  diamond:{n:'Rombo',d:'M20 1.5 38.5 23 20 44.5 1.5 23z',band:[25.5,7.5,31.4],med:[20,16,5]}
+};
+const CREST_PATTERNS=[['plain','Liso'],['stripes','Rayas'],['hoops','Aros'],['halves','Mitades'],['sash','Banda'],['quarters','Cuartos']];
+/* símbolos dibujados en 24×24 */
+const CREST_SYMBOLS={
+  star:['Estrella','<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8 6.8 19.5l1-5.8-4.2-4.1 5.8-.8z"/>'],
+  ball:['Balón','<circle cx="12" cy="12" r="8.5"/><path d="M12 7.6l3.4 2.5-1.3 4h-4.2l-1.3-4z" style="fill:var(--cs-bg)"/>'],
+  crown:['Corona','<path d="M3.5 17.5h17l1.2-10-5.4 4L12 5l-4.3 6.5-5.4-4z"/><rect x="3.5" y="18.8" width="17" height="2.2" rx=".6"/>'],
+  tower:['Torre','<path d="M5.5 21V8.5h2.6V11h2.2V8.5h3.4V11h2.2V8.5h2.6V21z"/><path d="M10.4 21v-4a1.6 1.6 0 0 1 3.2 0v4z" style="fill:var(--cs-bg)"/>'],
+  bolt:['Rayo','<path d="M13.6 2.5 5.5 13.6h5.3L9.7 21.5l8.8-11.3h-5.4z"/>'],
+  anchor:['Ancla','<circle cx="12" cy="5.2" r="2.2"/><path d="M11 7h2v11.6c2.6-.4 4.6-2.2 5.3-4.6l-1.8.5 2.6-3.6 1.6 4.3-1.4-.8C18.6 17.8 15.6 20.6 12 20.6S5.4 17.8 4.7 14.4l-1.4.8 1.6-4.3 2.6 3.6-1.8-.5c.7 2.4 2.7 4.2 5.3 4.6z"/><rect x="8.5" y="9" width="7" height="1.8" rx=".5"/>'],
+  none:['Ninguno','']
+};
+/* escudo que se usa: el editado o, si no, uno con los colores de la camiseta */
+function crestOf(){
+  if(S.crest)return S.crest;
+  const k=S.kit;
+  return {shape:'shield',pattern:['stripes','hoops','halves','sash'].includes(k.pattern)?k.pattern:'plain',c1:k.c1,c2:k.c2,trim:k.trim,accent:'#f4c84a',symbol:'star'};
+}
+const crestBody=(c,pat)=>{
+  const bg=`<rect width="40" height="46" fill="${c.c2}"/>`;
+  switch(pat){
+    case 'stripes':return bg+[5,17,29].map(x=>`<rect x="${x}" width="6" height="46" fill="${c.c1}"/>`).join('');
+    case 'hoops':return bg+[15,27,39].map(y=>`<rect y="${y}" width="40" height="6" fill="${c.c1}"/>`).join('');
+    case 'halves':return `<rect width="20" height="46" fill="${c.c1}"/><rect x="20" width="20" height="46" fill="${c.c2}"/>`;
+    case 'sash':return `<rect width="40" height="46" fill="${c.c1}"/><path d="M0 5 5 0 40 37v9h-4L0 11z" fill="${c.c2}"/>`;
+    case 'quarters':return bg+`<rect width="20" height="23" fill="${c.c1}"/><rect x="20" y="23" width="20" height="23" fill="${c.c1}"/>`;
+    default:return `<rect width="40" height="46" fill="${c.c1}"/>`;
+  }
+};
+let CREST_N=0;
+/* crest(c, short): SVG del escudo (por defecto, el del club) */
+function crest(c=crestOf(),short=clubShort()){
+  const sh=CREST_SHAPES[c.shape]||CREST_SHAPES.shield, id=`crc${++CREST_N}`, [by,bh,ty]=sh.band, [mx,my,mr]=sh.med;
+  const txt=isLight(c.trim)?'#1b2a22':'#fff', sym=CREST_SYMBOLS[c.symbol]||CREST_SYMBOLS.star, s=String(short||'');
+  return `<svg class="crest" viewBox="0 0 40 46" aria-hidden="true" style="--cs-bg:${c.trim}"><defs><clipPath id="${id}"><path d="${sh.d}"/></clipPath></defs>
+    <g clip-path="url(#${id})">${crestBody(c,c.pattern)}<rect y="${by}" width="40" height="${bh}" fill="${c.trim}"/></g>
+    <path d="${sh.d}" fill="none" stroke="${c.trim}" stroke-width="2.6" stroke-linejoin="round"/>
+    ${s?`<text x="20" y="${ty}" text-anchor="middle" font-family="Barlow Condensed,Arial Narrow,sans-serif" font-weight="800" font-size="${s.length>2?8.2:9.4}" fill="${txt}" letter-spacing=".6">${esc(s)}</text>`:''}
+    ${sym[1]?`<circle cx="${mx}" cy="${my}" r="${mr}" fill="${c.trim}" stroke="#fff" stroke-width="1.6"/><g fill="${c.accent}" transform="translate(${mx} ${my}) scale(${(mr*.66/8.5).toFixed(3)}) translate(-12 -12)">${sym[1]}</g>`:''}</svg>`;
 }
 
 /* ---------- Camisetas ---------- */
@@ -2152,7 +2208,7 @@ function renderConfig(){
       <div class="card-h"><h2>${ic('users')}Tu perfil y tu club</h2></div>
       ${row('Nombre del míster','Sale en la app y en tu cuenta',`<input class="input" id="set-manager" data-set="manager" value="${esc(S.manager)}" maxlength="40">`,'set-manager')}
       ${row('Nombre del club','El de tu modo carrera',`<input class="input" id="set-club" data-set="club" value="${esc(S.club.name)}" maxlength="40">`,'set-club')}
-      ${row('Siglas del escudo','Hasta 3 letras',`<input class="input set-short" id="set-short" data-set="short" value="${esc(clubShort())}" maxlength="3">`,'set-short')}
+      ${row('Escudo','Forma, diseño, símbolo, colores y siglas',`<span class="set-crest">${crest()}</span><button class="btn secondary sm" data-action="crest">${ic('shield')}Editar escudo</button>`)}
       ${row('Camiseta','Colores y diseño de la equipación',`<button class="btn secondary sm" data-action="kit">${ic('brush')}Cambiar camiseta</button>`)}
     </section>
     <section class="card set-card">
@@ -2248,6 +2304,31 @@ function deleteSeason(){
 function openTitles(i){tIdx=i;tdraft=[...S.seasons[i].titles];openModal(titlesModal());}
 function openKit(){draft=clone(S.kit);openModal(kitModal());}
 function refreshKit(){const m=$('#modalRoot .modal');if(m)m.innerHTML=kitModal();}
+/* Editor del escudo (como el de la camiseta): forma, diseño, símbolo, colores y siglas */
+let cdraft=null;
+function crestModal(){
+  const c=cdraft, opt=(act,key,val,label,svg)=>`<button class="pat ${c[key]===val?'on':''}" data-action="${act}" data-v="${val}" aria-pressed="${c[key]===val}">${svg}${label}</button>`;
+  const shapes=Object.entries(CREST_SHAPES).map(([k,s])=>opt('crest-shape','shape',k,s.n,crest({...c,shape:k},c.short))).join('');
+  const pats=CREST_PATTERNS.map(([k,l])=>opt('crest-pat','pattern',k,l,crest({...c,pattern:k},c.short))).join('');
+  /* los símbolos se enseñan solos y en grande para distinguirlos bien */
+  const symThumb=k=>`<svg class="sym-thumb" viewBox="0 0 24 24" aria-hidden="true" style="--cs-bg:${c.trim}"><circle cx="12" cy="12" r="12" fill="${c.trim}"/>${CREST_SYMBOLS[k][1]?`<g fill="${c.accent}" transform="translate(12 12) scale(.78) translate(-12 -12)">${CREST_SYMBOLS[k][1]}</g>`:'<path d="M7 17 17 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"/>'}</svg>`;
+  const syms=Object.keys(CREST_SYMBOLS).map(k=>opt('crest-sym','symbol',k,CREST_SYMBOLS[k][0],symThumb(k))).join('');
+  const cols=[['c1','Principal'],['c2','Secundario'],['trim','Borde y franja'],['accent','Símbolo']].map(([k,l])=>`<label class="col-in">${l}<input type="color" value="${c[k]}" data-crest="${k}"></label>`).join('');
+  return `${mHead('Escudo del club','Así se verá tu escudo en toda la app')}
+  <div class="crest-prev" id="crestPrev">${crestPreview()}</div>
+  <div class="kit-block"><label class="flabel" for="crestShort">Siglas</label><input class="input crest-short" id="crestShort" data-crest="short" value="${esc(c.short)}" maxlength="3" placeholder="Ej. RBB"></div>
+  <div class="kit-block"><span class="flabel">Forma</span><div class="pat-row crest-opts">${shapes}</div></div>
+  <div class="kit-block"><span class="flabel">Diseño</span><div class="pat-row crest-opts">${pats}</div></div>
+  <div class="kit-block"><span class="flabel">Símbolo</span><div class="pat-row crest-opts">${syms}</div></div>
+  <div class="kit-block"><span class="flabel">Colores</span><div class="colors">${cols}</div>
+    <button class="link crest-fromkit" data-action="crest-from-kit">${ic('shirt')}Usar los colores de la camiseta</button></div>
+  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="crest-save">${ic('check')}Guardar escudo</button></div>`;
+}
+function crestPreview(){
+  return `<div class="cp-big">${crest(cdraft,cdraft.short)}</div><div class="cp-side"><div class="cp-head">${crest(cdraft,cdraft.short)}<b>${esc(S.club.name)}</b></div><small>Así sale arriba, en el menú</small></div>`;
+}
+function openCrest(){cdraft={...clone(crestOf()),short:clubShort()};openModal(crestModal());}
+function refreshCrest(){const m=$('#modalRoot .modal');if(m){const y=m.scrollTop;m.innerHTML=crestModal();m.scrollTop=y;}}
 function openCheckout(plan){
   const y=UI.bill==='year';
   const info={pro:{n:'Career Board Pro',p:y?'24,99 €':'2,99 €',per:y?'al año':'al mes'},leyenda:{n:'Career Board Leyenda',p:'49,99 €',per:'pago único'}}[plan];
@@ -2413,7 +2494,17 @@ const ACTIONS={
   kit:openKit,
   'kit-pat'(b){draft.pattern=b.dataset.p;refreshKit();},
   'kit-preset'(b){const k=PRESETS[+b.dataset.i];draft={pattern:k.pattern,c1:k.c1,c2:k.c2,trim:k.trim,num:k.num};refreshKit();},
-  'kit-save'(){S.kit=draft;save();setKitVar();closeModal();rerender();toast('Camiseta guardada','shirt');},
+  'kit-save'(){S.kit=draft;save();setKitVar();closeModal();refreshHeader();rerender();toast('Camiseta guardada','shirt');},
+  crest:openCrest,
+  'crest-shape'(b){cdraft.shape=b.dataset.v;refreshCrest();},
+  'crest-pat'(b){cdraft.pattern=b.dataset.v;refreshCrest();},
+  'crest-sym'(b){cdraft.symbol=b.dataset.v;refreshCrest();},
+  'crest-from-kit'(){const k=S.kit;Object.assign(cdraft,{c1:k.c1,c2:k.c2,trim:k.trim,pattern:['stripes','hoops','halves','sash'].includes(k.pattern)?k.pattern:'plain'});refreshCrest();},
+  'crest-save'(){
+    const {short,...c}=cdraft, s=(short||'').trim().toUpperCase().slice(0,3);
+    S.crest=c; if(s)S.club.short=s; else delete S.club.short;
+    save();closeModal();refreshHeader();rerender();toast('Escudo guardado','shield');
+  },
   checkout(b){openCheckout(b.dataset.plan);},
   'close-modal':closeModal,
   'modal-bd'(el,e){if(e.target===el)closeModal();},
@@ -2454,6 +2545,9 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{if(e.target.closest('#seasonForm'))formAvg();});
 document.addEventListener('input',e=>{if(e.target.matches('[data-kit]')&&draft){draft[e.target.dataset.kit]=e.target.value;const p=$('#kitPrev');if(p)p.innerHTML=kitPreview();}});
+/* editor del escudo: colores y siglas se ven al momento; las miniaturas de las opciones se redibujan al soltar el color */
+document.addEventListener('input',e=>{if(e.target.matches('[data-crest]')&&cdraft){const k=e.target.dataset.crest;cdraft[k]=k==='short'?e.target.value.toUpperCase():e.target.value;const p=$('#crestPrev');if(p)p.innerHTML=crestPreview();}});
+document.addEventListener('change',e=>{if(e.target.matches('input[type=color][data-crest]')&&cdraft)refreshCrest();});
 /* carrusel de récords: avanza cuando el puntito activo termina de rellenarse, y se puede deslizar con el dedo */
 document.addEventListener('animationend',e=>{
   if(SET().reduceMotion)return; /* con "Reducir animaciones" los carruseles no pasan solos */
