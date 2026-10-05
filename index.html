@@ -554,6 +554,14 @@ select.input{-webkit-appearance:none;appearance:none;background:#fff var(--chev)
 .baja-pop button{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border:0;border-radius:9px;background:none;font:600 14px var(--font);color:var(--text);text-align:left;cursor:pointer}
 .baja-pop button:hover,.baja-pop button:focus-visible{background:var(--surface-2);outline:none}
 .baja-pop button .ic{width:18px;height:18px;color:var(--text-2)}
+.baja-pop .bp-loan{margin-bottom:4px;border-bottom:1px solid var(--line);border-radius:9px 9px 0 0;color:#3654b3}
+.baja-pop .bp-loan .ic{color:#3654b3}
+/* cedidos */
+.tag.loan-tag{background:#e8eefc;color:#3654b3}
+.prow.loaned .num-in:not(.m){background:var(--surface-2);color:var(--muted);border-style:dashed;cursor:not-allowed}
+.prow.loaned .who b{color:var(--text-2)}
+.bench-row.is-loan .bench-main{opacity:.85}
+.tbl tr.is-loan td{color:var(--muted)}
 .baja-pop .bp-del{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 9px 9px;color:var(--red)}
 .baja-pop .bp-del .ic{color:var(--red)}
 @keyframes popIn{from{opacity:0;transform:translateY(-4px) scale(.97)}}
@@ -1261,8 +1269,12 @@ function ranking(metric,scope){
   return S.players.map(p=>{let val=0,pj=0;list.forEach(se=>{const v=se.stats[p.id];if(v){val+=v[k];pj+=v[0];}});return {p,val,pj};})
     .filter(r=>r.val>0).sort((a,b)=>b.val-a.val||a.pj-b.pj);
 }
+/* Cedidos de una temporada (se.loans): siguen en esa temporada como uno más de la plantilla,
+   pero sin partidos, goles ni asistencias, fuera del once y sin contar para la media del equipo */
+const isLoan=(se,id)=>!!(se&&se.loans&&se.loans.includes(+id));
+const loanTag='<span class="tag loan-tag">Cedido</span>';
 function leaders(se){
-  const arr=Object.entries(se.stats).map(([id,v])=>({p:byId(id),pj:v[0],g:v[1],a:v[2],m:v[3]})).filter(x=>x.p);
+  const arr=Object.entries(se.stats).filter(([id])=>!isLoan(se,id)).map(([id,v])=>({p:byId(id),pj:v[0],g:v[1],a:v[2],m:v[3]})).filter(x=>x.p);
   const top=k=>arr.slice().sort((a,b)=>b[k]-a[k])[0];
   return {g:top('g'),a:top('a'),m:top('m')};
 }
@@ -1271,8 +1283,8 @@ function trophyList(){
   return Object.entries(map).map(([name,years])=>({name,years,shape:SHAPE[name]||'cup'})).sort((a,b)=>b.years.length-a.years.length);
 }
 const teamGoals=se=>Object.values(se.stats).reduce((a,v)=>a+v[1],0);
-/* Media de la plantilla de una temporada: promedio de las medias de los jugadores apuntados */
-const seasonAvg=se=>{const v=Object.values(se.stats);return v.length?Math.round(v.reduce((a,x)=>a+x[3],0)/v.length):0;};
+/* Media de la plantilla de una temporada: promedio de las medias de los jugadores apuntados (sin los cedidos) */
+const seasonAvg=se=>{const v=Object.entries(se.stats).filter(([id])=>!isLoan(se,id)).map(([,x])=>x);return v.length?Math.round(v.reduce((a,x)=>a+x[3],0)/v.length):0;};
 
 /* ---------- Once ideal y formaciones ----------
    Cada formación son 11 huecos [posición, x %, y %] (el ataque arriba). El 4-3-3 conserva el orden
@@ -1506,17 +1518,17 @@ function setRec(i){
 /* Plantilla de una temporada ya apuntada: los jugadores que jugaron ese año, con la media y la edad que tenían */
 function seasonSquad(i){
   const se=S.seasons[i], yrs=parseInt(S.current.label)-parseInt(se.label);
-  return Object.entries(se.stats).map(([id,v])=>{const p=byId(id);return p?{...p,ovr:v[3],age:p.age-yrs,st:{pj:v[0],g:v[1],a:v[2]}}:null;}).filter(Boolean);
+  return Object.entries(se.stats).map(([id,v])=>{const p=byId(id);return p?{...p,ovr:v[3],age:p.age-yrs,st:{pj:v[0],g:v[1],a:v[2]},loan:isLoan(se,id)}:null;}).filter(Boolean);
 }
 function renderPlantilla(){
   const past=UI.psea!=='cur'&&S.seasons[+UI.psea];
-  const f=fOf(xiOwner(UI.psea)), pref=xiSlotsFor(UI.psea), sq=past?seasonSquad(+UI.psea):squad(), xi=lineupXI(sq,pref,f);
+  const f=fOf(xiOwner(UI.psea)), pref=xiSlotsFor(UI.psea), sq=past?seasonSquad(+UI.psea):squad(), xi=lineupXI(sq.filter(p=>!p.loan),pref,f);
   const avg=xi.length?Math.round(xi.reduce((a,s)=>a+s.p.ovr,0)/xi.length):0;
   const ids=new Set(xi.map(s=>s.p.id));
   const bench=sq.filter(p=>!ids.has(p.id)).sort((a,b)=>POS_ORDER.indexOf(a.pos)-POS_ORDER.indexOf(b.pos)||b.ovr-a.ovr);
   const opts=`<option value="cur" ${past?'':'selected'}>Temporada ${S.current.label} · actual</option>`+S.seasons.map((se,i)=>({se,i})).reverse().map(({se,i})=>`<option value="${i}" ${UI.psea==i?'selected':''}>Temporada ${se.label}</option>`).join('');
   const sub=past?`${esc(past.div)} · ${past.pos}º · ${sq.length} jugadores · media de la plantilla ${seasonAvg(past)} · media del once ${avg}`:`${sq.length} jugadores · once ${f} · media ${avg}`;
-  const benchSub=p=>past?`${p.st.pj} PJ · ${p.st.g} goles · ${p.st.a} asist.`:`${p.age} años · ${flag(p.nat)}`;
+  const benchSub=p=>p.loan?'Cedido esta temporada':past?`${p.st.pj} PJ · ${p.st.g} goles · ${p.st.a} asist.`:`${p.age} años · ${flag(p.nat)}`;
   return `
   <div class="ph">
     <div><h1>Plantilla</h1><p>${sub}</p></div>
@@ -1536,17 +1548,17 @@ function renderPlantilla(){
     </div>
     <div class="card">
       <div class="card-h"><h2>Banquillo</h2><span class="sub">${bench.length} jugadores</span></div>
-      ${bench.map(p=>`<div class="bench-row" data-drag="bench" data-drag-id="${p.id}"><button class="bench-main" data-action="player" data-id="${p.id}">${miniShirt(p)}<div class="who"><b>${esc(p.name)}</b><small>${benchSub(p)}</small></div>${tags(p)}${posb(p.pos)}${rate(p.ovr)}</button><span class="grip" aria-hidden="true">${ic('grip')}</span></div>`).join('')||(sq.length?'<p class="hint">Sin suplentes.</p>':`<div class="squad-empty"><b>Tu plantilla está vacía</b><p>Añade a tus jugadores aquí o al apuntar tu primera temporada. Los 11 primeros forman el once.</p><button class="btn primary sm" data-action="add-player">${ic('userPlus')}Añadir jugador</button></div>`)}
+      ${bench.map(p=>`<div class="bench-row ${p.loan?'is-loan':''}" ${p.loan?'':`data-drag="bench" data-drag-id="${p.id}"`}><button class="bench-main" data-action="player" data-id="${p.id}">${miniShirt(p)}<div class="who"><b>${esc(p.name)}</b><small>${benchSub(p)}</small></div>${p.loan?loanTag:''}${tags(p)}${posb(p.pos)}${rate(p.ovr)}</button>${p.loan?'':`<span class="grip" aria-hidden="true">${ic('grip')}</span>`}</div>`).join('')||(sq.length?'<p class="hint">Sin suplentes.</p>':`<div class="squad-empty"><b>Tu plantilla está vacía</b><p>Añade a tus jugadores aquí o al apuntar tu primera temporada. Los 11 primeros forman el once.</p><button class="btn primary sm" data-action="add-player">${ic('userPlus')}Añadir jugador</button></div>`)}
       ${pref&&pref.length?`<button class="link xi-auto" data-action="xi-auto">${ic('refresh')}Volver al once automático (por media)</button>`:''}
     </div>
   </div>`;
 }
 
 function seasonTable(se){
-  const rows=Object.entries(se.stats).map(([id,v])=>({p:byId(id),pj:v[0],g:v[1],a:v[2],m:v[3]})).filter(x=>x.p).sort((a,b)=>b.g-a.g||b.a-a.a||b.pj-a.pj);
+  const rows=Object.entries(se.stats).map(([id,v])=>({p:byId(id),pj:v[0],g:v[1],a:v[2],m:v[3],loan:isLoan(se,id)})).filter(x=>x.p).sort((a,b)=>a.loan-b.loan||b.g-a.g||b.a-a.a||b.pj-a.pj);
   const T=rows.reduce((t,r)=>({pj:t.pj+r.pj,g:t.g+r.g,a:t.a+r.a}),{pj:0,g:0,a:0});
   return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Jugador</th><th class="r">PJ</th><th class="r">Goles</th><th class="r">Asist.</th><th class="r">Media</th></tr></thead><tbody>
-    ${rows.map(r=>`<tr class="click" data-action="player" data-id="${r.p.id}"><td><div class="pl">${miniShirt(r.p)}<b>${esc(r.p.name)}</b>${posb(r.p.pos)}</div></td><td class="r">${r.pj}</td><td class="r">${r.g}</td><td class="r">${r.a}</td><td class="r">${rate(r.m)}</td></tr>`).join('')}
+    ${rows.map(r=>`<tr class="click ${r.loan?'is-loan':''}" data-action="player" data-id="${r.p.id}"><td><div class="pl">${miniShirt(r.p)}<b>${esc(r.p.name)}</b>${posb(r.p.pos)}${r.loan?loanTag:''}</div></td>${r.loan?'<td class="r">—</td><td class="r">—</td><td class="r">—</td>':`<td class="r">${r.pj}</td><td class="r">${r.g}</td><td class="r">${r.a}</td>`}<td class="r">${rate(r.m)}</td></tr>`).join('')}
     </tbody><tfoot><tr><td>Total equipo</td><td class="r"></td><td class="r">${T.g}</td><td class="r">${T.a}</td><td class="r"></td></tr></tfoot></table></div>`;
 }
 function renderTemporadas(){
@@ -1645,12 +1657,13 @@ function renderHistoria(){
    en la temporada (once + banquillo). Se recalcula al escribir, al añadir y al quitar. */
 function formAvg(){
   const f=$('#seasonForm'), out=$('#s-avg'); if(!f||!out)return;
-  const ms=[...f.querySelectorAll('.prow[data-id]')].map(r=>parseInt(f.elements['m_'+r.dataset.id].value)||0).filter(Boolean);
+  const ms=[...f.querySelectorAll('.prow[data-id]:not(.loaned)')].map(r=>parseInt(f.elements['m_'+r.dataset.id].value)||0).filter(Boolean); /* los cedidos no cuentan */
   out.innerHTML=ms.length?`${Math.round(ms.reduce((a,m)=>a+m,0)/ms.length)}<small>de ${ms.length} jugadores</small>`:'—';
 }
 /* Huecos del once en el formulario (FORM_SLOTS[i] = id del jugador en el hueco i de la formación FORM_F).
    Se ven de atrás hacia delante y de izquierda a derecha (viewOrder). */
 let FORM_F='4-3-3', FORM_SLOTS=null, FORM_AW_PLAYERS=[], FORM_EXTRA=[], FORM_BAJAS={}; /* FORM_BAJAS[id] = motivo; se aplica al guardar */
+let FORM_LOANS=new Set(); /* cedidos de la temporada que se está apuntando */
 /* Fila de premio individual en el formulario: premio + jugador */
 function awardRow(w={}){
   return `<div class="aw-row">
@@ -1660,14 +1673,13 @@ function awardRow(w={}){
   </div>`;
 }
 /* Fila de un jugador en el formulario de temporada (partidos, goles, asistencias y media).
-   Todo el que tenga fila cuenta como parte de esa temporada; la × lo quita. */
+   Todo el que tenga fila cuenta como parte de esa temporada; la × lo quita o lo marca como cedido. */
 function formRow(p,se){
-  const v=se&&se.stats[p.id];
-  return `<div class="prow" data-id="${p.id}" data-drag-id="${p.id}">
-    <div class="who" title="Arrastra para cambiarlo entre el once y el banquillo"><span class="grip" aria-hidden="true">${ic('grip')}</span>${miniShirt(p)}<b>${esc(p.name)}</b>${posb(p.pos)}<span class="tag slot-tag" hidden></span>${p.status?`<span class="tag muted">${esc(p.status)}</span>`:''}</div>
-    <div class="cell"><label for="pj_${p.id}">Partidos</label><input class="num-in" id="pj_${p.id}" name="pj_${p.id}" type="number" min="0" max="80" inputmode="numeric" placeholder="0" value="${v?v[0]:''}" aria-label="Partidos de ${esc(p.name)}"></div>
-    <div class="cell"><label for="g_${p.id}">Goles</label><input class="num-in" id="g_${p.id}" name="g_${p.id}" type="number" min="0" max="99" inputmode="numeric" placeholder="0" value="${v?v[1]:''}" aria-label="Goles de ${esc(p.name)}"></div>
-    <div class="cell"><label for="a_${p.id}">Asist.</label><input class="num-in" id="a_${p.id}" name="a_${p.id}" type="number" min="0" max="99" inputmode="numeric" placeholder="0" value="${v?v[2]:''}" aria-label="Asistencias de ${esc(p.name)}"></div>
+  const v=se&&se.stats[p.id], L=FORM_LOANS.has(p.id);
+  const num=(k,i,max,lab)=>`<div class="cell"><label for="${k}_${p.id}">${lab}</label><input class="num-in" id="${k}_${p.id}" name="${k}_${p.id}" type="number" min="0" max="${max}" inputmode="numeric" placeholder="0" value="${L?0:v?v[i]:''}" ${L?'readonly tabindex="-1"':''} aria-label="${lab} de ${esc(p.name)}"></div>`;
+  return `<div class="prow ${L?'loaned':''}" data-id="${p.id}" data-drag-id="${p.id}">
+    <div class="who" title="Arrastra para cambiarlo entre el once y el banquillo"><span class="grip" aria-hidden="true">${ic('grip')}</span>${miniShirt(p)}<b>${esc(p.name)}</b>${posb(p.pos)}<span class="tag slot-tag" hidden></span><span class="tag loan-tag" ${L?'':'hidden'}>Cedido</span>${p.status?`<span class="tag muted">${esc(p.status)}</span>`:''}</div>
+    ${num('pj',0,80,'Partidos')}${num('g',1,99,'Goles')}${num('a',2,99,'Asist.')}
     <div class="cell"><label for="m_${p.id}">Media</label><input class="num-in m" id="m_${p.id}" name="m_${p.id}" type="number" min="40" max="99" inputmode="numeric" value="${v?v[3]:p.ovr}" aria-label="Media de ${esc(p.name)}"></div>
     <button type="button" class="row-del" data-action="row-del" data-id="${p.id}" aria-haspopup="menu" aria-label="Dar de baja a ${esc(p.name)}" title="Dar de baja">${ic('x')}</button>
   </div>`;
@@ -1714,8 +1726,11 @@ function openBajaPop(btn){
   const id=+btn.dataset.id, p=byId(id);
   const el=document.createElement('div'); el.className='baja-pop'; el.setAttribute('role','menu');
   /* si el jugador aún no tiene ninguna temporada guardada (lo acabas de crear), también se puede borrar por error */
-  const fresh=!S.seasons.some(se=>se.stats[id]);
-  el.innerHTML=`<p>¿Por qué se va <b>${esc(surname(p.name))}</b>?</p>${BAJAS.map(([s,i])=>`<button type="button" role="menuitem" data-action="baja-pick" data-id="${id}" data-s="${s}">${ic(i)}${s}</button>`).join('')}${fresh?`<button type="button" role="menuitem" class="bp-del" data-action="baja-pick" data-id="${id}" data-s="__del">${ic('trash')}Borrar, me equivoqué</button>`:''}`;
+  const fresh=!S.seasons.some(se=>se.stats[id]), loaned=FORM_LOANS.has(id);
+  /* "Cedido" no lo quita de la temporada: se queda como uno más, sin partidos, goles ni asistencias */
+  const loanBtn=loaned?`<button type="button" role="menuitem" class="bp-loan" data-action="baja-pick" data-id="${id}" data-s="__unloan">${ic('refresh')}Vuelve de la cesión</button>`
+    :`<button type="button" role="menuitem" class="bp-loan" data-action="baja-pick" data-id="${id}" data-s="__loan">${ic('swap')}Cedido</button>`;
+  el.innerHTML=`<p>${loaned?`<b>${esc(surname(p.name))}</b> está cedido`:`¿Por qué se va <b>${esc(surname(p.name))}</b>?`}</p>${loanBtn}${BAJAS.map(([s,i])=>`<button type="button" role="menuitem" data-action="baja-pick" data-id="${id}" data-s="${s}">${ic(i)}${s}</button>`).join('')}${fresh?`<button type="button" role="menuitem" class="bp-del" data-action="baja-pick" data-id="${id}" data-s="__del">${ic('trash')}Borrar, me equivoqué</button>`:''}`;
   document.body.appendChild(el);
   const r=btn.getBoundingClientRect(), w=el.offsetWidth, h=el.offsetHeight;
   let top=r.bottom+6; if(top+h>innerHeight-8)top=Math.max(8,r.top-h-6);
@@ -1723,23 +1738,46 @@ function openBajaPop(btn){
   btn.classList.add('on'); btn.setAttribute('aria-expanded','true');
   POP={el,btn}; el.querySelector('button').focus({preventScroll:true});
 }
+/* Saca a un titular del once del formulario: su hueco lo ocupa el mejor suplente (misma posición → misma línea →
+   cualquiera; nunca un cedido) o, si no hay, queda libre. La fila del titular queda fuera de la página (sin colocar).
+   Devuelve el texto del cambio para el aviso. */
+function leaveXI(f,r,id){
+  const i=FORM_SLOTS.indexOf(id), pos=slotsF(FORM_F)[i].pos, m=pid=>parseInt(f.elements['m_'+pid].value)||0;
+  const bench=[...f.querySelectorAll('.bench-list .prow[data-id]:not(.loaned)')].map(x=>byId(x.dataset.id));
+  const sub=[0,1,2].map(t=>bench.filter(b=>t===0?pos.includes(b.pos):t===1?LINE[b.pos]===LINE[pos[0]]:true).sort((a,b)=>m(b.id)-m(a.id))[0]).find(Boolean);
+  const ph=document.createElement('div'); r.replaceWith(ph);
+  if(sub){FORM_SLOTS[i]=sub.id; ph.replaceWith(f.querySelector(`.prow[data-id="${sub.id}"]`)); flashSwap([sub.id]); return ` · entra ${surname(sub.name)} de ${pos[0]}`;}
+  FORM_SLOTS[i]=null; ph.remove(); return ''; /* sin suplentes, su puesto queda libre para el siguiente que se añada */
+}
+/* Cedido (o vuelve de la cesión): se queda en la temporada como uno más, en el banquillo,
+   con partidos, goles y asistencias a 0 (bloqueados) y su media; no cuenta para la media del equipo */
+function setLoanRow(r,on){
+  r.classList.toggle('loaned',on); r.querySelector('.loan-tag').hidden=!on;
+  ['pj','g','a'].forEach(k=>{
+    const el=r.querySelector(`input[name^="${k}_"]`);
+    if(on){el.dataset.prev=el.value;el.value=0;el.setAttribute('tabindex','-1');}
+    else{el.value=el.dataset.prev&&el.dataset.prev!=='0'?el.dataset.prev:'';el.removeAttribute('tabindex');}
+    el.readOnly=on;
+  });
+}
+function formLoan(id,on){
+  const f=$('#seasonForm'), r=f&&f.querySelector(`.prow[data-id="${id}"]`); if(!r)return;
+  const name=surname(byId(id).name);
+  let msg=on?`${name}: cedido esta temporada`:`${name} vuelve de la cesión`;
+  if(on){if(r.closest('[data-sec="xi"]')){msg+=leaveXI(f,r,id);f.querySelector('.bench-list').appendChild(r);}FORM_LOANS.add(id);}
+  else FORM_LOANS.delete(id);
+  setLoanRow(r,on);
+  updateFormCounts(); formAvg(); refreshSlotTags(); flashSwap([id]); toast(msg,'swap');
+}
 /* Da de baja a un jugador en el formulario: sale de la temporada y pasa a la lista de abajo con su motivo.
-   Si era titular, su hueco lo ocupa el mejor suplente (misma posición → misma línea → cualquiera). */
+   Si era titular, su hueco lo ocupa el mejor suplente. */
 function formRemoveRow(id,status){
   const f=$('#seasonForm'), r=f&&f.querySelector(`.prow[data-id="${id}"]`); if(!r)return;
   const name=surname(byId(id).name);
   const del=status==='__del';
   let msg=del?`${name} borrado`:`${name}: ${status.toLowerCase()}`;
-  if(r.closest('[data-sec="xi"]')){
-    const i=FORM_SLOTS.indexOf(id), pos=slotsF(FORM_F)[i].pos, m=pid=>parseInt(f.elements['m_'+pid].value)||0;
-    const bench=[...f.querySelectorAll('.bench-list .prow[data-id]')].map(x=>byId(x.dataset.id));
-    const sub=[0,1,2].map(t=>bench.filter(b=>t===0?pos.includes(b.pos):t===1?LINE[b.pos]===LINE[pos[0]]:true).sort((a,b)=>m(b.id)-m(a.id))[0]).find(Boolean);
-    if(sub){
-      FORM_SLOTS[i]=sub.id; r.replaceWith(f.querySelector(`.prow[data-id="${sub.id}"]`));
-      msg+=` · entra ${surname(sub.name)} de ${pos[0]}`;
-      flashSwap([sub.id]);
-    }else{FORM_SLOTS[i]=null;r.remove();} /* sin suplentes, su puesto queda libre para el siguiente que se añada */
-  }else r.remove();
+  if(r.closest('[data-sec="xi"]'))msg+=leaveXI(f,r,id); else r.remove();
+  FORM_LOANS.delete(id);
   if(del){ /* creado por error: se borra del todo */
     S.players=S.players.filter(p=>p.id!==id); FORM_AW_PLAYERS=FORM_AW_PLAYERS.filter(p=>p.id!==id);
     f.querySelectorAll(`select[name="aw_p"] option[value="${id}"]`).forEach(o=>o.remove());
@@ -1760,13 +1798,13 @@ const formBack=()=>UI.edit!=null||UI.from==='temporadas'?'temporadas':'inicio';
 /* Sirve para apuntar la temporada en juego o, con UI.edit = índice, para editar una ya guardada */
 function renderApuntar(){
   const ei=UI.edit, se=ei!=null?S.seasons[ei]:null;
-  FORM_BAJAS={};
+  FORM_BAJAS={}; FORM_LOANS=new Set(se&&se.loans||[]);
   const byPos=(a,b)=>POS_ORDER.indexOf(a.pos)-POS_ORDER.indexOf(b.pos)||b.ovr-a.ovr;
   /* 11 inicial = el once de esa temporada (por medias); banquillo = el resto.
      Abajo se puede añadir a quien falte: alguien del club que no se apuntó (extra) o un fichaje nuevo. */
   const pool=se?seasonSquad(ei):squad();
   FORM_F=fOf(se||S); /* la formación es la de esa temporada (se cambia en Plantilla) */
-  const xiRes=lineupXI(pool,xiSlotsFor(se?ei:'cur'),FORM_F), vo=viewOrder(FORM_F);
+  const xiRes=lineupXI(pool.filter(p=>!FORM_LOANS.has(p.id)),xiSlotsFor(se?ei:'cur'),FORM_F), vo=viewOrder(FORM_F);
   FORM_SLOTS=slotsOf(xiRes);
   const xi=xiRes.slice().sort((a,b)=>vo.indexOf(a.i)-vo.indexOf(b.i)).map(s=>s.p), xiIds=new Set(xi.map(p=>p.id));
   const bench=pool.filter(p=>!xiIds.has(p.id)).sort(byPos);
@@ -1820,7 +1858,7 @@ function renderApuntar(){
         </div>
         <details class="more" id="extraBox" ${extra.length?'':'hidden'}><summary>${ic('plus')}Jugadores del club que no están en esta temporada (<span id="extraCount">${extra.length}</span>)</summary><div class="x-list">${extraItems(extra)}</div></details>
       </div>
-      <p class="hint">${ic('info')}${se?'':'La media viene rellenada con la actual: cámbiala por la que tenga al acabar. '}¿Alguien se fue? Pulsa la <b>×</b> de su fila y elige si fue vendido, se retiró o se fue como agente libre. Si te equivocas, lo vuelves a añadir desde la lista de arriba.</p>
+      <p class="hint">${ic('info')}${se?'':'La media viene rellenada con la actual: cámbiala por la que tenga al acabar. '}¿Alguien estuvo cedido o se fue? Pulsa la <b>×</b> de su fila. <b>Cedido</b> lo deja en la temporada como uno más, sin partidos, goles ni asistencias; vendido, retirado o agente libre lo quitan. Si te equivocas, lo vuelves a añadir desde la lista de arriba.</p>
     </div>
     <div class="card" style="margin-top:16px">
       <div class="card-h"><h2>4. Premios individuales</h2><span class="sub">Opcional</span></div>
@@ -1909,7 +1947,7 @@ const mHead=(t,p)=>`<div class="modal-h"><div><h2>${t}</h2>${p?`<p>${p}</p>`:''}
 /* Cambios en el once desde Plantilla (temporada que se está viendo) */
 function viewXI(){
   const past=UI.psea!=='cur'&&S.seasons[+UI.psea], sq=past?seasonSquad(+UI.psea):squad(), f=fOf(xiOwner(UI.psea));
-  const xi=lineupXI(sq,xiSlotsFor(UI.psea),f);
+  const xi=lineupXI(sq.filter(p=>!p.loan),xiSlotsFor(UI.psea),f); /* los cedidos no juegan en el once */
   return {sq,xi,f,ids:xi.map(s=>s.p.id)};
 }
 /* Cambia la formación de la temporada que se está viendo en Plantilla.
@@ -1970,6 +2008,8 @@ function formSwapRows(a,b){
     const i=FORM_SLOTS.indexOf(+x.dataset.id); FORM_SLOTS[i]=+y.dataset.id;
     swapDom(x,y);
     msg=`Entra ${surname(byId(y.dataset.id).name)} de ${slotsF(FORM_F)[i].pos[0]}, sale ${surname(byId(x.dataset.id).name)}`;
+    /* un cedido que entra en el once ya no está cedido */
+    if(y.classList.contains('loaned')){FORM_LOANS.delete(+y.dataset.id);setLoanRow(y,false);msg+=' · vuelve de la cesión';}
   }
   updateFormCounts(); formAvg(); refreshSlotTags(); flashSwap([a,b]); toast(msg,'swap');
   return true;
@@ -1988,7 +2028,7 @@ function updateFormCounts(){
 }
 function openPlayer(id){
   const p=byId(id); if(!p)return;
-  const rows=S.seasons.filter(se=>se.stats[p.id]).map(se=>{const v=se.stats[p.id];return {label:se.label,pj:v[0],g:v[1],a:v[2],m:v[3]};});
+  const rows=S.seasons.filter(se=>se.stats[p.id]).map(se=>{const v=se.stats[p.id];return {label:se.label,pj:v[0],g:v[1],a:v[2],m:v[3],loan:isLoan(se,p.id)};});
   const t=totals(p.id);
   let spark='';
   if(rows.length>1){
@@ -1998,11 +2038,11 @@ function openPlayer(id){
   }
   const gk=p.pos==='POR';
   let swapBtn='';
-  if(current==='plantilla'){const {sq,ids}=viewXI();if(sq.some(x=>x.id==p.id))swapBtn=`<button class="btn secondary sm pm-swap" data-action="swap" data-id="${p.id}">${ic('swap')}${ids.includes(p.id)?'Sacar del once':'Meter en el once'}</button>`;}
+  if(current==='plantilla'){const {sq,ids}=viewXI();if(sq.some(x=>x.id==p.id&&!x.loan))swapBtn=`<button class="btn secondary sm pm-swap" data-action="swap" data-id="${p.id}">${ic('swap')}${ids.includes(p.id)?'Sacar del once':'Meter en el once'}</button>`;}
   const played=S.seasons.filter(se=>se.stats[p.id]);
   const titles=played.flatMap(se=>se.titles.map(t=>`${t} ${se.label.slice(2)}`));
   const pichichi=played.filter(se=>{const L=leaders(se);return L.g&&L.g.p.id==p.id&&L.g.g>0;}).map(se=>se.label);
-  const bestS=rows.length?rows.reduce((a,r)=>(gk?r.m>a.m:r.g+r.a>a.g+a.a)?r:a):null;
+  const played2=rows.filter(r=>!r.loan), bestS=played2.length?played2.reduce((a,r)=>(gk?r.m>a.m:r.g+r.a>a.g+a.a)?r:a):null;
   const myAwards=S.seasons.flatMap(se=>(se.awards||[]).filter(w=>w.id==p.id).map(w=>`${w.a} ${se.label.slice(2)}`));
   const hl=[
     myAwards.length?`<div>${ic('medal')}<span><b>${myAwards.length} ${myAwards.length===1?'premio individual':'premios individuales'}:</b> ${esc(myAwards.join(' · '))}</span></div>`:'',
@@ -2017,7 +2057,7 @@ function openPlayer(id){
   ${rows.length?`<div class="pm-sum"><div><b>${t.pj}</b><span>Partidos</span></div><div><b>${t.g}</b><span>Goles</span></div><div><b>${t.a}</b><span>Asistencias</span></div></div>
   ${hl?`<div class="pm-hl">${hl}</div>`:''}
   ${spark?`<div class="pm-sec">Evolución de la media</div>${spark}`:''}
-  <div class="pm-sec">Temporada a temporada</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Temporada</th><th class="r">PJ</th><th class="r">Goles</th><th class="r">Asist.</th><th class="r">Media</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.label}</td><td class="r">${r.pj}</td><td class="r">${r.g}</td><td class="r">${r.a}</td><td class="r">${rate(r.m)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="r">${t.pj}</td><td class="r">${t.g}</td><td class="r">${t.a}</td><td class="r"></td></tr></tfoot></table></div>`:'<div class="card empty" style="box-shadow:none">Todavía no tiene temporadas apuntadas.</div>'}
+  <div class="pm-sec">Temporada a temporada</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Temporada</th><th class="r">PJ</th><th class="r">Goles</th><th class="r">Asist.</th><th class="r">Media</th></tr></thead><tbody>${rows.map(r=>r.loan?`<tr class="is-loan"><td>${r.label} ${loanTag}</td><td class="r">—</td><td class="r">—</td><td class="r">—</td><td class="r">${rate(r.m)}</td></tr>`:`<tr><td>${r.label}</td><td class="r">${r.pj}</td><td class="r">${r.g}</td><td class="r">${r.a}</td><td class="r">${rate(r.m)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="r">${t.pj}</td><td class="r">${t.g}</td><td class="r">${t.a}</td><td class="r"></td></tr></tfoot></table></div>`:'<div class="card empty" style="box-shadow:none">Todavía no tiene temporadas apuntadas.</div>'}
   ${p.status?'':`<div class="baja">¿Ya no está en el club?<select class="select" id="bajaSel" aria-label="Motivo de la baja"><option>Vendido</option><option>Cedido</option><option>Retirado</option><option>Agente libre</option></select><button class="btn secondary sm" data-action="baja" data-id="${p.id}">Dar de baja</button></div>`}`);
 }
 /* Dorsal que se propone: el primero libre en la plantilla actual */
@@ -2242,7 +2282,7 @@ const FORMS={
     /* bajas marcadas con la × (vendido, retirado, agente libre): dejan la plantilla del club */
     Object.entries(FORM_BAJAS).forEach(([id,s])=>{const p=byId(id);if(p)p.status=s;});
     if(se){
-      Object.assign(se,{div:fd.get('div'),pos,titles:fd.getAll('titles'),stats,awards,formation:FORM_F,xiSlots:FORM_SLOTS.slice()}); delete se.xi;
+      Object.assign(se,{div:fd.get('div'),pos,titles:fd.getAll('titles'),stats,awards,loans:[...FORM_LOANS].filter(id=>stats[id]),formation:FORM_F,xiSlots:FORM_SLOTS.slice()}); delete se.xi;
       /* si es la última temporada apuntada, su media pasa a ser la media actual del jugador */
       if(ei===S.seasons.length-1)Object.entries(stats).forEach(([id,v])=>{const p=byId(id);if(p&&!p.status)p.ovr=v[3];});
       save();UI.edit=null;UI.open=ei;go('temporadas');
@@ -2250,7 +2290,7 @@ const FORMS={
       return;
     }
     const label=S.current.label;
-    S.seasons.push({label,div:fd.get('div'),pos,titles:fd.getAll('titles'),stats,awards,formation:FORM_F,xiSlots:FORM_SLOTS.slice()});
+    S.seasons.push({label,div:fd.get('div'),pos,titles:fd.getAll('titles'),stats,awards,loans:[...FORM_LOANS].filter(id=>stats[id]),formation:FORM_F,xiSlots:FORM_SLOTS.slice()});
     S.xiSlots=FORM_SLOTS.slice(); delete S.xi; /* la temporada siguiente empieza con el mismo once y las mismas posiciones */
     squad().forEach(p=>p.age++);
     S.current={label:nextLabel(label),div:fd.get('div')};
@@ -2354,7 +2394,7 @@ const ACTIONS={
   'add-player'(){openAddPlayer(false);},
   'sign-player'(){openAddPlayer(true);},
   'row-del'(b){openBajaPop(b);},
-  'baja-pick'(b){closeBajaPop();formRemoveRow(+b.dataset.id,b.dataset.s);},
+  'baja-pick'(b){closeBajaPop();const id=+b.dataset.id,s=b.dataset.s;if(s==='__loan'||s==='__unloan')formLoan(id,s==='__loan');else formRemoveRow(id,s);},
   'row-add'(b){const p=byId(b.dataset.id);if(p){delete FORM_BAJAS[p.id];addFormRow(p);toast(`${surname(p.name)} añadido a esta temporada`,'plus');}},
   'submit-player'(){const f=document.querySelector('form[data-form="player"]');if(f.reportValidity())FORMS.player(new FormData(f));},
   'new-user'(){closeModal();screen('app');go('inicio');openNewCareer();},
