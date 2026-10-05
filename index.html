@@ -661,6 +661,7 @@ button.m-row:hover{background:var(--surface-2)}
 .tag-pro{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 7px;border-radius:6px;background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold-line)}
 .acct{display:flex;align-items:center;gap:14px;margin-bottom:16px}
 .acct .avatar{width:48px;height:48px;font-size:16px}
+.avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
 .acct b{display:block;font-size:16px}
 .acct span{font-size:13px;color:var(--muted)}
 .tsel-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -899,6 +900,8 @@ button.m-row:hover{background:var(--surface-2)}
 <div id="modalRoot"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- Datos del proyecto de Firebase (si está vacío, el login es simulado) -->
+<script src="firebase-config.js"></script>
 <script>
 /* =========================================================
    CAREER BOARD · Boceto v0.3
@@ -1819,9 +1822,11 @@ function go(page,keep){
   document.querySelectorAll('.tab,.bn-item').forEach(n=>{const on=n.dataset.nav===navPage;n.classList.toggle('active',on);if(on)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current');});
 }
 const rerender=()=>go(current,true);
+/* foto de la cuenta de Google si hay sesión real; si no, las iniciales del míster */
+const avatarHTML=()=>AUTH_USER&&AUTH_USER.photoURL?`<img src="${esc(AUTH_USER.photoURL)}" alt="" referrerpolicy="no-referrer">`:esc(initials(S.manager));
 function refreshHeader(){
   $('#clubBtn').innerHTML=crest()+`<span class="cname">${esc(S.club.name)}</span>`+ic('chevron');
-  $('#avatarBtn').textContent=initials(S.manager);
+  $('#avatarBtn').innerHTML=avatarHTML();
 }
 
 /* ---------- Intro ---------- */
@@ -2004,7 +2009,7 @@ function openCareer(){
 }
 function openAccount(){
   openModal(`${mHead('Tu cuenta','')}
-  <div class="acct"><span class="avatar">${initials(S.manager)}</span><div><b>${esc(S.manager)}</b><span>Cuenta de Google · Plan Amateur (gratis)</span></div></div>
+  <div class="acct"><span class="avatar">${avatarHTML()}</span><div><b>${esc(S.manager)}</b><span>${AUTH_USER&&AUTH_USER.email?esc(AUTH_USER.email):'Cuenta de Google'} · Plan Amateur (gratis)</span></div></div>
   <button class="m-row" data-nav="premium"><span class="icon-btn" style="background:var(--gold-soft);color:var(--gold)">${ic('crown')}</span><div><b>Ver planes Pro</b><span>Carreras ilimitadas y más</span></div></button>
   <button class="m-row" data-action="new-user"><span class="icon-btn">${ic('userPlus')}</span><div><b>Empezar de cero como usuario nuevo</b><span>Carrera vacía, sin jugadores · solo en este boceto</span></div></button>
   <button class="m-row" data-action="reset"><span class="icon-btn">${ic('refresh')}</span><div><b>Restablecer datos de ejemplo</b><span>Solo en este boceto</span></div></button>
@@ -2148,15 +2153,49 @@ const FORMS={
 let tt;
 function toast(msg,icon='check'){const t=$('#toast');t.innerHTML=ic(icon)+`<span>${esc(msg)}</span>`;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800);}
 
-/* ---------- Login simulado (Firebase Auth con Google en producción) ---------- */
-function doLogin(){
-  const g=$('.btn-google'); if(g.classList.contains('loading'))return;
-  g.classList.add('loading'); g.querySelector('span').textContent='Conectando con Google…';
-  setTimeout(()=>{
-    g.classList.remove('loading'); g.querySelector('span').textContent='Continuar con Google';
-    screen('app'); go('inicio'); toast(`Bienvenido, míster ${S.manager.split(' ')[0]}`);
-  },900);
+/* ---------- Login con Google ----------
+   Si firebase-config.js tiene los datos del proyecto, el login es real (Firebase Auth, ver el script del final).
+   Si no, se simula como en el boceto. */
+const FB_ON=!!(window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
+let AUTH_USER=null;
+const AUTH_MSG={
+  'auth/popup-closed-by-user':'Has cerrado la ventana de Google antes de terminar',
+  'auth/cancelled-popup-request':'Has cerrado la ventana de Google antes de terminar',
+  'auth/unauthorized-domain':'Esta dirección no está autorizada en Firebase (Authentication › Configuración › Dominios autorizados)',
+  'auth/operation-not-allowed':'Activa Google en Firebase (Authentication › Método de inicio de sesión)',
+  'auth/network-request-failed':'Sin conexión con Google. Revisa internet e inténtalo otra vez',
+  'auth/api-key-not-valid.-please-pass-a-valid-api-key.':'Los datos de firebase-config.js no son válidos',
+  'auth/invalid-api-key':'Los datos de firebase-config.js no son válidos'
+};
+const authMsg=e=>AUTH_MSG[e&&e.code]||`No se pudo entrar con Google (${(e&&e.code)||'error'})`;
+function setGoogleBtn(loading){const g=$('.btn-google');g.classList.toggle('loading',loading);g.querySelector('span').textContent=loading?'Conectando con Google…':'Continuar con Google';}
+/* entra en la app con el usuario de Google (su nombre pasa a ser el del míster) */
+function enterApp(u,quiet){
+  if(u&&u.displayName&&S.manager!==u.displayName){S.manager=u.displayName;save();}
+  refreshHeader(); closeModal(); screen('app'); go('inicio');
+  if(!quiet)toast(`Bienvenido, míster ${S.manager.split(' ')[0]}`);
 }
+async function doLogin(){
+  if($('.btn-google').classList.contains('loading'))return;
+  if(FB_ON){
+    if(location.protocol==='file:'){toast('Para entrar con Google abre la app con tools\\abrir-en-local.bat (no con doble clic)','info');return;}
+    if(!window.CBAuth){toast('Conectando con Firebase… inténtalo de nuevo en un momento','info');return;}
+    setGoogleBtn(true);
+    try{const u=await window.CBAuth.signIn(); if(u)enterApp(u);} /* (con redirección, la página vuelve sola ya con sesión) */
+    catch(e){toast(authMsg(e),'info');}
+    finally{setGoogleBtn(false);}
+    return;
+  }
+  setGoogleBtn(true); /* boceto: login simulado */
+  setTimeout(()=>{setGoogleBtn(false);enterApp(null);},900);
+}
+/* Firebase avisa aquí cada vez que cambia la sesión (también al abrir la app si ya habías entrado) */
+window.onAuthUser=u=>{
+  AUTH_USER=u;
+  if(u){if($('#app').hidden)enterApp(u,true);else refreshHeader();}
+  else if(!$('#app').hidden){closeModal();screen('login');}
+};
+window.onAuthError=e=>toast(authMsg(e),'info');
 
 /* ---------- Acciones ---------- */
 const ACTIONS={
@@ -2165,7 +2204,7 @@ const ACTIONS={
   dot(b){setSlide(+b.dataset.i);},
   'to-intro'(){setSlide(0);screen('intro');},
   login:doLogin,
-  logout(){closeModal();screen('login');},
+  logout(){closeModal();if(window.CBAuth&&AUTH_USER)window.CBAuth.signOut();else screen('login');},
   htab(b){UI.htab=b.dataset.t;rerender();},
   'to-historia'(b){UI.htab=b.dataset.t;go('historia');},
   'to-vit-ind'(){UI.htab='vit';UI.vtab='ind';go('historia');},
@@ -2359,6 +2398,36 @@ document.addEventListener('keydown',e=>{
   buildIntroVisuals();
   setSlide(0);
 })();
+</script>
+
+<!-- ---------- Login real con Google (Firebase Auth) ----------
+     Solo se activa si firebase-config.js tiene los datos del proyecto. Carga el SDK oficial de Firebase
+     y le pasa a la app: CBAuth.signIn() / CBAuth.signOut() y los cambios de sesión (window.onAuthUser). -->
+<script type="module">
+const cfg=window.FIREBASE_CONFIG;
+if(cfg&&cfg.apiKey){
+  const base='https://www.gstatic.com/firebasejs/12.19.0/';
+  try{
+    const [{initializeApp},{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,getRedirectResult,signOut,onAuthStateChanged}]=
+      await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js')]);
+    const auth=getAuth(initializeApp(cfg));
+    auth.languageCode='es';
+    const provider=new GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'}); /* deja elegir cuenta aunque ya haya una abierta */
+    window.CBAuth={
+      async signIn(){
+        try{return (await signInWithPopup(auth,provider)).user;}
+        catch(e){ /* si el navegador bloquea la ventana emergente, se entra por redirección */
+          if(e.code==='auth/popup-blocked'){await signInWithRedirect(auth,provider);return null;}
+          throw e;
+        }
+      },
+      signOut:()=>signOut(auth)
+    };
+    getRedirectResult(auth).catch(e=>window.onAuthError&&window.onAuthError(e));
+    onAuthStateChanged(auth,u=>window.onAuthUser&&window.onAuthUser(u));
+  }catch(e){console.error('No se pudo cargar Firebase',e);}
+}
 </script>
 </body>
 </html>
