@@ -2047,7 +2047,7 @@ function openAddPlayer(inForm){
     <div class="field"><label for="p-nat">Nacionalidad</label><div class="nat-field"><span id="p-nat-flag">${flag('ESP')}</span><select class="input" id="p-nat" name="nat">${NATS.slice().sort((a,b)=>a[0]==='ESP'?-1:b[0]==='ESP'?1:a[2].localeCompare(b[2],'es')).map(([c,,n])=>`<option value="${c}" ${c==='ESP'?'selected':''}>${n}</option>`).join('')}</select></div></div>
     <label class="check inline"><input type="checkbox" name="cantera">Es canterano</label>
   </form>
-  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn secondary" data-action="submit-player-again">${ic('plus')}Añadir y otro</button><button class="btn primary" data-action="submit-player">${ic('check')}${inForm?'Añadir a la temporada':'Añadir'}</button></div>`);
+  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button>${inForm&&!first?'':`<button class="btn secondary" data-action="submit-player-again">${ic('plus')}Añadir y otro</button>`}<button class="btn primary" data-action="submit-player">${ic('check')}${inForm?'Añadir a la temporada':'Añadir'}</button></div>`);
   $('#p-name').focus();
 }
 function openCareer(){
