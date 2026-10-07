@@ -2180,7 +2180,7 @@ function openNewCareer(){
     <div class="field"><label for="c-div">Liga</label><select class="input" id="c-div" name="div">${LEAGUES.map(([c,ls])=>`<optgroup label="${c}">${ls.map(d=>`<option>${d}</option>`).join('')}</optgroup>`).join('')}</select></div>
     <div class="field"><label for="c-season">Temporada en la que empiezas</label><select class="input" id="c-season" name="season">${seasons.map(s=>`<option ${s==='2026/27'?'selected':''}>${s}</option>`).join('')}</select></div>
   </form>
-  ${S.players.length||S.seasons.length?`<p class="hint warn-line">${ic('info')}Se sustituirá tu carrera actual (<b>${esc(S.club.name)}</b>) en este navegador. Si quieres guardarla, descarga antes una copia en Configuración › Tus datos.</p>`:''}
+  ${S.players.length||S.seasons.length?`<p class="hint warn-line">${ic('info')}Se sustituirá tu carrera actual (<b>${esc(S.club.name)}</b>) en este navegador.</p>`:''}
   <p class="hint" style="margin-top:12px">${ic('info')}La camiseta y la formación las cambias luego en Plantilla.</p>
   <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="career-create">${ic('check')}Crear carrera</button></div>`);
   $('#c-club').focus();
@@ -2228,11 +2228,6 @@ function renderConfig(){
       ${row('Vibración','En el móvil, al arrastrar jugadores para hacer cambios',`<input type="checkbox" class="switch" id="set-vib" data-set="vibrate" ${st.vibrate!==false?'checked':''}>`,'set-vib')}
       ${row('Reducir animaciones','Quita movimientos y para los carruseles automáticos',`<input type="checkbox" class="switch" id="set-anim" data-set="reduceMotion" ${st.reduceMotion?'checked':''}>`,'set-anim')}
     </section>
-    <section class="card set-card">
-      <div class="card-h"><h2>${ic('download')}Tus datos</h2></div>
-      ${row('Descargar copia de seguridad','Un archivo con toda tu carrera, por si cambias de navegador o de ordenador',`<button class="btn secondary sm" data-action="backup-down">${ic('download')}Descargar</button>`)}
-      ${row('Cargar copia de seguridad','Sustituye la carrera actual por la del archivo',`<label class="btn secondary sm">${ic('upload')}Cargar<input type="file" accept=".json,application/json" data-backup hidden></label>`)}
-    </section>
     <section class="card set-card set-danger">
       <div class="card-h"><h2>${ic('userPlus')}Empezar de cero</h2></div>
       ${row('Crear una carrera nueva','Empiezas con la plantilla vacía, como un usuario nuevo. La carrera actual se borra de este navegador.',`<button class="btn danger-soft sm" data-action="new-user">Empezar de cero</button>`)}
@@ -2248,25 +2243,6 @@ function applySetting(el){
   if(k==='vibrate')st.vibrate=v;
   if(k==='reduceMotion'){st.reduceMotion=v;applyPrefs();}
   save(); refreshHeader(); toast('Guardado','check');
-}
-function downloadBackup(){
-  const slug=S.club.name.normalize('NFKD').replace(/[^\w\s-]/g,'').trim().toLowerCase().replace(/\s+/g,'-')||'carrera';
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));
-  a.download=`career-board-${slug}-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-  toast('Copia descargada','download');
-}
-let PENDING_BACKUP=null;
-async function readBackup(file){
-  try{
-    const d=JSON.parse(await file.text());
-    if(!d||!d.club||!Array.isArray(d.players)||!Array.isArray(d.seasons))throw new Error('formato');
-    PENDING_BACKUP=d;
-    openModal(`${mHead('¿Cargar esta copia?','')}
-    <div class="del-warn">${ic('upload')}<div><p>Copia de <b>${esc(d.club.name||'')}</b>: ${d.seasons.length} temporadas y ${d.players.length} jugadores.</p><p>Sustituirá a la carrera actual (<b>${esc(S.club.name)}</b>) en este navegador.</p></div></div>
-    <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="backup-ok">${ic('check')}Cargar copia</button></div>`);
-  }catch(e){toast('Ese archivo no es una copia de Career Board','info');}
 }
 let draft=null;
 function kitModal(){
@@ -2545,14 +2521,7 @@ const ACTIONS={
   'stripe-go'(){closeModal();toast('Boceto: aquí se abriría Stripe Checkout','card');},
   'new-career'(){closeModal();go('premium');toast('Varias carreras a la vez es parte de Pro','crown');},
   reset(){const st=S.settings;S=migrate(clone(DEMO));if(st)S.settings=st;save();setKitVar();refreshHeader();closeModal();UI.open=null;go('inicio');toast('Datos de ejemplo restablecidos');},
-  'set-lang'(){toast('La app ya está en español. Los demás idiomas llegarán pronto','info');},
-  'backup-down':downloadBackup,
-  'backup-ok'(){
-    if(!PENDING_BACKUP)return;
-    S=migrate(Object.assign({awardsV:2,formation:'4-3-3',kit:clone(DEMO.kit),gkKit:clone(DEMO.gkKit),current:clone(DEMO.current),manager:S.manager,settings:S.settings},PENDING_BACKUP));
-    PENDING_BACKUP=null; Object.assign(UI,{open:null,psea:'cur',edit:null,scope:'all',rec:0,awt:0});
-    save(); setKitVar(); refreshHeader(); applyPrefs(); closeModal(); go('inicio'); toast(`Copia cargada: ${S.club.name}`,'check');
-  }
+  'set-lang'(){toast('La app ya está en español. Los demás idiomas llegarán pronto','info');}
 };
 
 document.addEventListener('click',e=>{
@@ -2571,7 +2540,6 @@ document.addEventListener('change',e=>{
   if(e.target.matches('[data-formation]'))changeFormation(e.target.value);
   if(e.target.id==='p-nat')$('#p-nat-flag').innerHTML=flag(e.target.value);
   if(e.target.matches('[data-set]'))applySetting(e.target);
-  if(e.target.matches('[data-backup]')&&e.target.files[0]){readBackup(e.target.files[0]);e.target.value='';}
   /* al cambiar de liga en el formulario, los títulos pasan a ser los de ese país (se quitan los que ya no valen) */
   if(e.target.id==='s-div'){const box=$('#tchks'),div=e.target.value,ok=titlesFor(div);
     const keep=[...box.querySelectorAll('input:checked')].map(c=>c.value).filter(t=>ok.includes(t));
