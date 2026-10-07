@@ -1601,10 +1601,13 @@ function setRec(i){
   box.querySelectorAll('.rec-dots button').forEach((d,k)=>{d.classList.toggle('on',k===UI.rec);d.setAttribute('aria-current',k===UI.rec);});
 }
 
+/* Edad que tenía un jugador en una temporada. Su edad guardada es la de la temporada en juego o, si ya se fue
+   del club, la de la temporada en la que se fue (desde entonces no cumple años en la app). */
+const ageIn=(se,p)=>p.age-(parseInt(p.status&&p.leftIn?p.leftIn:S.current.label)-parseInt(se.label));
 /* Plantilla de una temporada ya apuntada: los jugadores que jugaron ese año, con la media, la edad y el dorsal que tenían */
 function seasonSquad(i){
-  const se=S.seasons[i], yrs=parseInt(S.current.label)-parseInt(se.label);
-  return Object.entries(se.stats).map(([id,v])=>{const p=byId(id);return p?{...p,num:numIn(se,id),ovr:v[3],age:p.age-yrs,st:{pj:v[0],g:v[1],a:v[2]},loan:isLoan(se,id)}:null;}).filter(Boolean);
+  const se=S.seasons[i];
+  return Object.entries(se.stats).map(([id,v])=>{const p=byId(id);return p?{...p,num:numIn(se,id),ovr:v[3],age:ageIn(se,p),st:{pj:v[0],g:v[1],a:v[2]},loan:isLoan(se,id)}:null;}).filter(Boolean);
 }
 function renderPlantilla(){
   const past=UI.psea!=='cur'&&S.seasons[+UI.psea];
@@ -2138,7 +2141,7 @@ function updateFormCounts(){
 }
 function openPlayer(id){
   const p=byId(id); if(!p)return;
-  const rows=S.seasons.filter(se=>se.stats[p.id]).map(se=>{const v=se.stats[p.id];return {label:se.label,num:numIn(se,p.id),pj:v[0],g:v[1],a:v[2],m:v[3],loan:isLoan(se,p.id)};});
+  const rows=S.seasons.filter(se=>se.stats[p.id]).map(se=>{const v=se.stats[p.id];return {label:se.label,age:ageIn(se,p),pj:v[0],g:v[1],a:v[2],m:v[3],loan:isLoan(se,p.id)};});
   const t=totals(p.id);
   let spark='';
   if(rows.length>1){
@@ -2165,7 +2168,7 @@ function openPlayer(id){
   ${rows.length?`<div class="pm-sum"><div><b>${t.pj}</b><span>Partidos</span></div><div><b>${t.g}</b><span>Goles</span></div><div><b>${t.a}</b><span>Asistencias</span></div></div>
   ${hl?`<div class="pm-hl">${hl}</div>`:''}
   ${spark?`<div class="pm-sec">Evolución de la media</div>${spark}`:''}
-  <div class="pm-sec">Temporada a temporada</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Temporada</th><th class="r">PJ</th><th class="r">Goles</th><th class="r">Asist.</th><th class="r">Media</th></tr></thead><tbody>${rows.map(r=>r.loan?`<tr class="is-loan"><td>${r.label} <span class="dn" title="Dorsal esa temporada">${r.num}</span> ${loanTag}</td><td class="r">—</td><td class="r">—</td><td class="r">—</td><td class="r">${rate(r.m)}</td></tr>`:`<tr><td>${r.label} <span class="dn" title="Dorsal esa temporada">${r.num}</span></td><td class="r">${r.pj}</td><td class="r">${r.g}</td><td class="r">${r.a}</td><td class="r">${rate(r.m)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="r">${t.pj}</td><td class="r">${t.g}</td><td class="r">${t.a}</td><td class="r"></td></tr></tfoot></table></div>`:'<div class="card empty" style="box-shadow:none">Todavía no tiene temporadas apuntadas.</div>'}
+  <div class="pm-sec">Temporada a temporada</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Temporada</th><th class="r">PJ</th><th class="r">Goles</th><th class="r">Asist.</th><th class="r">Media</th></tr></thead><tbody>${rows.map(r=>r.loan?`<tr class="is-loan"><td>${r.label} <span class="dn" title="Edad esa temporada">${r.age} años</span> ${loanTag}</td><td class="r">—</td><td class="r">—</td><td class="r">—</td><td class="r">${rate(r.m)}</td></tr>`:`<tr><td>${r.label} <span class="dn" title="Edad esa temporada">${r.age} años</span></td><td class="r">${r.pj}</td><td class="r">${r.g}</td><td class="r">${r.a}</td><td class="r">${rate(r.m)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="r">${t.pj}</td><td class="r">${t.g}</td><td class="r">${t.a}</td><td class="r"></td></tr></tfoot></table></div>`:'<div class="card empty" style="box-shadow:none">Todavía no tiene temporadas apuntadas.</div>'}
   ${p.status?'':`<div class="baja">¿Ya no está en el club?<select class="select" id="bajaSel" aria-label="Motivo de la baja"><option>Vendido</option><option>Cedido</option><option>Retirado</option><option>Agente libre</option></select><button class="btn secondary sm" data-action="baja" data-id="${p.id}">Dar de baja</button></div>`}`);
 }
 /* Dorsal que se propone: el primero libre en la plantilla actual */
