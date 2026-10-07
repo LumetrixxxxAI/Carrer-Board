@@ -1964,12 +1964,12 @@ function renderApuntar(){
   </form>`;
 }
 
-/* Planes: Amateur (gratis) y Pro (2,99 € al mes). Sin plan anual ni pago único. */
+/* Planes: Amateur (gratis) y Pro (3,99 € al mes). Sin plan anual ni pago único. */
 function renderPremium(){
   const plans=[
     {name:'Amateur',desc:'Para tu primera carrera.',price:'0 €',per:'para siempre',save:'',btn:'<button class="btn secondary" disabled>Tu plan actual</button>',
       f:[[1,'1 modo carrera'],[1,'Temporadas ilimitadas'],[1,'Plantilla, goleadores y vitrina'],[0,'Varias carreras a la vez'],[0,'Gráficas avanzadas'],[0,'Tarjetas para compartir en redes']]},
-    {name:'Pro',desc:'Para el míster que lo apunta todo.',price:'2,99 €',per:'/ mes',save:'Sin permanencia: cancela cuando quieras',pop:1,btn:'<button class="btn primary" data-action="checkout" data-plan="pro">Hazte Pro</button>',
+    {name:'Pro',desc:'Para el míster que lo apunta todo.',price:'3,99 €',per:'/ mes',save:'Sin permanencia: cancela cuando quieras',pop:1,btn:'<button class="btn primary" data-action="checkout" data-plan="pro">Hazte Pro</button>',
       f:[[1,'Carreras ilimitadas'],[1,'Gráficas y evolución avanzadas'],[1,'Tarjetas para Instagram y TikTok'],[1,'Escudo propio de tu club'],[1,'Sin anuncios']]}
   ];
   return `
@@ -2370,7 +2370,7 @@ function crestPreview(){
 function openCrest(){cdraft={...clone(crestOf()),short:clubShort()};openModal(crestModal());}
 function refreshCrest(){const m=$('#modalRoot .modal');if(m){const y=m.scrollTop;m.innerHTML=crestModal();m.scrollTop=y;}}
 function openCheckout(){
-  const info={n:'Career Board Pro',p:'2,99 €',per:'al mes · cancela cuando quieras'};
+  const info={n:'Career Board Pro',p:'3,99 €',per:'al mes · cancela cuando quieras'};
   openModal(`${mHead('Checkout seguro','Así funcionará el pago en la versión real')}
   <div class="sum"><div><b>${info.n}</b><div style="color:var(--text-2);font-size:13px">${info.per}</div></div><strong>${info.p}</strong></div>
   <div class="steps">
