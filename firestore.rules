@@ -1,0 +1,38 @@
+// Reglas de seguridad de Firestore para Career Board.
+// Se pegan en la consola de Firebase: Firestore Database › Reglas › Publicar.
+//
+// - Cada usuario solo puede leer y escribir sus propios datos (users/{su uid}/...).
+// - La carrera se guarda con un número de versión (rev). Solo se acepta la versión siguiente (rev + 1):
+//   así una versión antigua (otro móvil, una pestaña vieja) nunca puede pisar a una más nueva.
+// - Las copias de seguridad (backups) solo se pueden crear: nadie puede cambiarlas ni borrarlas,
+//   para que siempre haya de dónde recuperar la carrera si algo se borra por error.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function validCareer() {
+      let d = request.resource.data;
+      return d.data is string && d.data.size() > 20 && d.data.size() < 1000000 && d.rev is int;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /careers/{careerId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validCareer() && request.resource.data.rev == 1;
+        allow update: if isOwner(uid) && validCareer() && request.resource.data.rev == resource.data.rev + 1;
+        allow delete: if isOwner(uid);
+
+        match /backups/{backupId} {
+          allow read: if isOwner(uid);
+          allow create: if isOwner(uid) && request.resource.data.data is string && request.resource.data.data.size() < 1000000;
+          allow update, delete: if false;
+        }
+      }
+    }
+  }
+}
