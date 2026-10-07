@@ -1793,10 +1793,9 @@ document.addEventListener('input',e=>{
 /* Lista de abajo: jugadores del club que no están en esta temporada, con un botón para añadirlos */
 const stOf=p=>FORM_BAJAS[p.id]||p.status;
 const extraSort=(a,b)=>!!stOf(a)-!!stOf(b)||POS_ORDER.indexOf(a.pos)-POS_ORDER.indexOf(b.pos)||b.ovr-a.ovr;
-/* Al apuntar la temporada en juego, quien se fue en una temporada anterior puede volver al club (vuelve a tu plantilla);
-   quien se fue en esta misma temporada (p. ej. vendido en invierno) se añade solo para apuntar lo que jugó */
-const canReturn=p=>!formSeason()&&p.status&&!FORM_BAJAS[p.id]&&p.leftIn&&p.leftIn!==S.current.label;
-const leftTag=p=>FORM_BAJAS[p.id]?FORM_BAJAS[p.id]:p.status?`${p.status}${p.leftIn?(p.leftIn===S.current.label&&!formSeason()?' esta temporada':` en ${p.leftIn}`):''}`:'';
+/* Al apuntar la temporada en juego, quien se fue del club puede volver (vuelve a tu plantilla con su historial) */
+const canReturn=p=>!formSeason()&&p.status&&!FORM_BAJAS[p.id];
+const leftTag=p=>FORM_BAJAS[p.id]?FORM_BAJAS[p.id]:p.status?`${p.status}${p.leftIn?` en ${p.leftIn}`:''}`:'';
 const extraItems=list=>list.map(p=>`<div class="x-item">${miniShirt(p)}<b>${esc(p.name)}</b>${posb(p.pos)}${leftTag(p)?`<span class="tag muted">${esc(leftTag(p))}</span>`:''}${canReturn(p)
   ?`<button type="button" class="btn secondary sm x-return" data-action="row-add" data-id="${p.id}">${ic('refresh')}Vuelve al club</button>`
   :`<button type="button" class="btn secondary sm" data-action="row-add" data-id="${p.id}">${ic('plus')}Añadir</button>`}</div>`).join('');
@@ -2429,7 +2428,7 @@ const FORMS={
     /* los que vuelven al club: dejan de estar de baja y cumplen los años que pasaron fuera (su edad se paró al irse) */
     if(!se){
       snap.returns=[...FORM_RETURNS].filter(id=>stats[id]).map(id=>{const p=byId(id);return {id,status:p.status,leftIn:p.leftIn,age:p.age};});
-      snap.returns.forEach(r=>{const p=byId(r.id);p.age+=Math.max(0,parseInt(S.current.label)-parseInt(r.leftIn));delete p.status;delete p.leftIn;});
+      snap.returns.forEach(r=>{const p=byId(r.id);p.age+=Math.max(0,parseInt(S.current.label)-parseInt(r.leftIn||S.current.label));delete p.status;delete p.leftIn;});
     }
     if(se){
       Object.assign(se,{div:fd.get('div'),pos,titles:fd.getAll('titles'),stats,nums,awards,loans:[...FORM_LOANS].filter(id=>stats[id]),formation:FORM_F,xiSlots:FORM_SLOTS.slice()}); delete se.xi;
