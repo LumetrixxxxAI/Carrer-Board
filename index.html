@@ -592,14 +592,11 @@ select.input{-webkit-appearance:none;appearance:none;background:#fff var(--chev)
 .prem-head p{color:var(--text-2)}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:var(--green-soft);color:var(--green-d);font-weight:600;font-size:12.5px}
 .pill .ic{width:15px;height:15px}
-.bill{display:flex;justify-content:center;margin:0 0 30px}
-.plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch;max-width:1040px;margin:0 auto}
+.plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch;max-width:740px;margin:0 auto}
 .plan{position:relative;display:flex;flex-direction:column;padding:24px;border-radius:20px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow-sm)}
 .plan.pop{border:2px solid var(--green);box-shadow:var(--shadow)}
-.plan.leg{border-color:var(--gold-line);background:linear-gradient(180deg,var(--gold-soft),#fff 40%)}
 .plan .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);padding:5px 12px;border-radius:999px;background:var(--green);color:#fff;font:700 11px/1 var(--font);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 .plan h3{font-weight:800;font-size:20px;display:flex;align-items:center;gap:8px}
-.plan.leg h3{color:var(--gold)}
 .plan .desc{color:var(--text-2);font-size:14px;margin:4px 0 18px}
 .price{display:flex;align-items:baseline;gap:6px}
 .price b{font:700 48px/1 var(--font-d)}
@@ -608,7 +605,6 @@ select.input{-webkit-appearance:none;appearance:none;background:#fff var(--chev)
 .plan ul{list-style:none;padding:0;margin:0 0 22px;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--text-2)}
 .plan li{display:flex;gap:10px;align-items:flex-start}
 .plan li .ic{width:18px;height:18px;color:var(--green);margin-top:1px}
-.plan.leg li .ic{color:var(--gold)}
 .plan li.no{color:var(--muted);opacity:.7}
 .plan li.no .ic{color:var(--muted)}
 .plan .btn{margin-top:auto;width:100%;height:48px}
@@ -1296,7 +1292,7 @@ function migrate(s){
 function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.parse(r));}catch(e){}return migrate(clone(DEMO));}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 let S=load();
-const UI={htab:'g',scope:'all',open:null,bill:'month',rec:0,psea:'cur',edit:null,vtab:'col'};
+const UI={htab:'g',scope:'all',open:null,rec:0,psea:'cur',edit:null,vtab:'col'};
 let current='inicio';
 
 /* ---------- Utilidades ---------- */
@@ -1968,20 +1964,17 @@ function renderApuntar(){
   </form>`;
 }
 
+/* Planes: Amateur (gratis) y Pro (2,99 € al mes). Sin plan anual ni pago único. */
 function renderPremium(){
-  const y=UI.bill==='year';
   const plans=[
     {name:'Amateur',desc:'Para tu primera carrera.',price:'0 €',per:'para siempre',save:'',btn:'<button class="btn secondary" disabled>Tu plan actual</button>',
       f:[[1,'1 modo carrera'],[1,'Temporadas ilimitadas'],[1,'Plantilla, goleadores y vitrina'],[0,'Varias carreras a la vez'],[0,'Gráficas avanzadas'],[0,'Tarjetas para compartir en redes']]},
-    {name:'Pro',desc:'Para el míster que lo apunta todo.',price:y?'24,99 €':'2,99 €',per:y?'/ año':'/ mes',save:y?'Ahorras un 30 %':'o 24,99 € al año',pop:1,btn:'<button class="btn primary" data-action="checkout" data-plan="pro">Hazte Pro</button>',
-      f:[[1,'Carreras ilimitadas'],[1,'Gráficas y evolución avanzadas'],[1,'Tarjetas para Instagram y TikTok'],[1,'Escudo propio de tu club'],[1,'Sin anuncios']]},
-    {name:'Leyenda',desc:'Un único pago. Tuyo para siempre.',price:'49,99 €',per:'pago único',save:'Sin suscripción',leg:1,btn:'<button class="btn gold" data-action="checkout" data-plan="leyenda">Ser Leyenda</button>',
-      f:[[1,'Todo lo de Pro, de por vida'],[1,'Acceso anticipado a novedades'],[1,'Insignia de Leyenda'],[1,'Soporte prioritario']]}
+    {name:'Pro',desc:'Para el míster que lo apunta todo.',price:'2,99 €',per:'/ mes',save:'Sin permanencia: cancela cuando quieras',pop:1,btn:'<button class="btn primary" data-action="checkout" data-plan="pro">Hazte Pro</button>',
+      f:[[1,'Carreras ilimitadas'],[1,'Gráficas y evolución avanzadas'],[1,'Tarjetas para Instagram y TikTok'],[1,'Escudo propio de tu club'],[1,'Sin anuncios']]}
   ];
   return `
   <div class="prem-head"><span class="pill">${ic('crown')}Planes</span><h1>Lleva tu carrera <em>al siguiente nivel</em></h1><p>Empieza gratis. Mejora cuando quieras. Cancela cuando quieras.</p></div>
-  <div class="bill"><div class="seg"><button class="${!y?'on':''}" data-action="bill" data-t="month">Mensual</button><button class="${y?'on':''}" data-action="bill" data-t="year">Anual · −30 %</button></div></div>
-  <div class="plans">${plans.map(p=>`<div class="plan ${p.pop?'pop':''} ${p.leg?'leg':''}">${p.pop?'<span class="badge">Más popular</span>':''}<h3>${p.leg?ic('crown'):''}${p.name}</h3><p class="desc">${p.desc}</p><div class="price"><b>${p.price}</b><span>${p.per}</span></div><div class="save">${p.save}</div><ul>${p.f.map(([ok,t])=>`<li class="${ok?'':'no'}">${ic(ok?'check':'x')}${t}</li>`).join('')}</ul>${p.btn}</div>`).join('')}</div>
+  <div class="plans">${plans.map(p=>`<div class="plan ${p.pop?'pop':''}">${p.pop?'<span class="badge">Más popular</span>':''}<h3>${p.name}</h3><p class="desc">${p.desc}</p><div class="price"><b>${p.price}</b><span>${p.per}</span></div><div class="save">${p.save}</div><ul>${p.f.map(([ok,t])=>`<li class="${ok?'':'no'}">${ic(ok?'check':'x')}${t}</li>`).join('')}</ul>${p.btn}</div>`).join('')}</div>
   <div class="trust">
     <div>${ic('card')}<span><b>Pago seguro con Stripe</b>Tu tarjeta la procesa Stripe. Nunca la vemos ni la guardamos.</span></div>
     <div>${ic('shield')}<span><b>Cuenta de Google</b>Inicio de sesión con Firebase Auth. Tus datos, solo tuyos.</span></div>
@@ -2376,9 +2369,8 @@ function crestPreview(){
 }
 function openCrest(){cdraft={...clone(crestOf()),short:clubShort()};openModal(crestModal());}
 function refreshCrest(){const m=$('#modalRoot .modal');if(m){const y=m.scrollTop;m.innerHTML=crestModal();m.scrollTop=y;}}
-function openCheckout(plan){
-  const y=UI.bill==='year';
-  const info={pro:{n:'Career Board Pro',p:y?'24,99 €':'2,99 €',per:y?'al año':'al mes'},leyenda:{n:'Career Board Leyenda',p:'49,99 €',per:'pago único'}}[plan];
+function openCheckout(){
+  const info={n:'Career Board Pro',p:'2,99 €',per:'al mes · cancela cuando quieras'};
   openModal(`${mHead('Checkout seguro','Así funcionará el pago en la versión real')}
   <div class="sum"><div><b>${info.n}</b><div style="color:var(--text-2);font-size:13px">${info.per}</div></div><strong>${info.p}</strong></div>
   <div class="steps">
@@ -2521,7 +2513,6 @@ const ACTIONS={
   titles(b){openTitles(+b.dataset.i);},
   tsel(b){const t=b.dataset.t;tdraft=tdraft.includes(t)?tdraft.filter(x=>x!==t):[...tdraft,t];$('#modalRoot .modal').innerHTML=titlesModal();},
   'titles-save'(){const se=S.seasons[tIdx];se.titles=[...new Set([...titlesFor(se.div),...tdraft])].filter(t=>tdraft.includes(t));save();closeModal();rerender();toast(`Títulos de la ${se.label} actualizados`,'trophy');},
-  bill(b){UI.bill=b.dataset.t;rerender();},
   'toggle-season'(b){const i=+b.dataset.i;UI.open=UI.open===i?null:i;rerender();},
   player(b){openPlayer(b.dataset.id);},
   baja(b){const p=byId(b.dataset.id);p.status=$('#bajaSel').value;p.leftIn=S.current.label;save();closeModal();rerender();toast(`${p.name}: ${p.status.toLowerCase()}`,'check');},
@@ -2558,7 +2549,7 @@ const ACTIONS={
     S.crest=c; if(s)S.club.short=s; else delete S.club.short;
     save();closeModal();refreshHeader();rerender();toast('Escudo guardado','shield');
   },
-  checkout(b){openCheckout(b.dataset.plan);},
+  checkout(){openCheckout();},
   'close-modal':closeModal,
   'modal-bd'(el,e){if(e.target===el)closeModal();},
   'stripe-go'(){closeModal();toast('Boceto: aquí se abriría Stripe Checkout','card');},
