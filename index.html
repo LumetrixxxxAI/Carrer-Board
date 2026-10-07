@@ -1609,7 +1609,7 @@ function renderPlantilla(){
   const f=fOf(xiOwner(UI.psea)), pref=xiSlotsFor(UI.psea), sq=past?seasonSquad(+UI.psea):squad(), xi=lineupXI(sq.filter(p=>!p.loan),pref,f);
   const avg=xi.length?Math.round(xi.reduce((a,s)=>a+s.p.ovr,0)/xi.length):0;
   const ids=new Set(xi.map(s=>s.p.id));
-  const bench=sq.filter(p=>!ids.has(p.id)).sort((a,b)=>POS_ORDER.indexOf(a.pos)-POS_ORDER.indexOf(b.pos)||b.ovr-a.ovr);
+  const bench=benchList(sq,ids,UI.psea);
   const opts=`<option value="cur" ${past?'':'selected'}>Temporada ${S.current.label} · actual</option>`+S.seasons.map((se,i)=>({se,i})).reverse().map(({se,i})=>`<option value="${i}" ${UI.psea==i?'selected':''}>Temporada ${se.label}</option>`).join('');
   const sub=past?`${esc(past.div)} · ${past.pos}º · ${sq.length} jugadores · media de la plantilla ${seasonAvg(past)} · media del once ${avg}`:`${sq.length} jugadores · once ${f} · media ${avg}`;
   const benchSub=p=>p.loan?'Cedido esta temporada':past?`${p.st.pj} PJ · ${p.st.g} goles · ${p.st.a} asist.`:`${p.age} años · ${flag(p.nat)}`;
@@ -1622,7 +1622,7 @@ function renderPlantilla(){
     </div>
   </div>
   ${past?`<div class="past-bar">${ic('calendar')}<span>Estás viendo la plantilla de la <b>${past.label}</b>, con las medias que tenían ese año.</span>${past.titles.map(t=>`<span class="tchip">${trophyMini(t)}${esc(t)}</span>`).join('')}<button class="link" data-action="psea-cur">Volver a la actual ${ic('arrowRight')}</button></div>`:''}
-  <p class="hint" style="margin:0 0 14px">${ic('info')}Toca un jugador para ver su carrera. Arrastra un suplente encima de un titular y jugará en esa posición, sea cual sea la suya; o arrastra un titular sobre otro para cambiarles la posición. En el móvil, mantén pulsado y arrastra.</p>
+  <p class="hint" style="margin:0 0 14px">${ic('info')}Toca un jugador para ver su carrera. Arrastra un suplente encima de un titular y jugará en esa posición, sea cual sea la suya; o arrastra un titular sobre otro para cambiarles la posición. Para ordenar el banquillo, arrastra un suplente sobre otro. En el móvil, mantén pulsado y arrastra.</p>
   <div class="xi">
     <div>${pitchHTML(xi.length<11?emptySlots(f).map(sl=>xi.find(s=>s.i===sl.i)||sl):xi,'',true)}
       <div class="form-bar">
@@ -2066,12 +2066,22 @@ function changeFormation(nf){
     setTimeout(()=>{t.style.transition='';},600);
   });
 }
-function openSwap(id){
-  const {sq,ids}=viewXI(), p=sq.find(x=>x.id==id); if(!p)return;
-  const inXI=ids.includes(p.id), same=o=>LINE[o.pos]===LINE[p.pos];
-  const others=sq.filter(o=>inXI?!ids.includes(o.id):ids.includes(o.id)).sort((a,b)=>same(b)-same(a)||POS_ORDER.indexOf(a.pos)-POS_ORDER.indexOf(b.pos));
-  openModal(`${mHead(inXI?`Sacar a ${esc(p.name)} del once`:`Meter a ${esc(p.name)} en el once`,inXI?'¿Quién entra en su lugar?':'¿A quién sustituye?')}
-  <div class="swap-list">${others.map(o=>`<button class="m-row" data-action="do-swap" data-a="${p.id}" data-b="${o.id}">${miniShirt(o)}<div><b>${esc(o.name)}</b><span>${o.pos}${same(o)?' · misma línea':''}</span></div><span class="end">${rate(o.ovr)}</span></button>`).join('')||'<p class="hint">No hay nadie con quien cambiarlo.</p>'}</div>`);
+/* Banquillo en el orden que hayas elegido arrastrando (S.benchOrder / se.benchOrder);
+   si no has tocado nada, por posición y media. Los que no estén en ese orden van al final. */
+function benchList(sq,xiIds,psea){
+  const def=sq.filter(p=>!xiIds.has(p.id)).sort((a,b)=>POS_ORDER.indexOf(a.pos)-POS_ORDER.indexOf(b.pos)||b.ovr-a.ovr);
+  const ord=(xiOwner(psea)||{}).benchOrder; if(!ord)return def;
+  const rank=id=>{const i=ord.indexOf(id);return i<0?1e6:i;};
+  return def.slice().sort((a,b)=>rank(a.id)-rank(b.id));
+}
+/* Suplente sobre suplente: el que arrastras ocupa el sitio del otro en el banquillo */
+function reorderBench(a,b){
+  const {sq,xi}=viewXI(), order=benchList(sq,new Set(xi.map(s=>s.p.id)),UI.psea).map(p=>p.id);
+  const from=order.indexOf(a), to=order.indexOf(b); if(from<0||to<0||from===to)return false;
+  order.splice(from,1); order.splice(to,0,a);
+  xiOwner(UI.psea).benchOrder=order; save(); rerender();
+  flashSwap([a]); toast(`${surname(byId(a).name)} cambia de sitio en el banquillo`,'swap');
+  return true;
 }
 /* Hace el cambio en Plantilla (temporada que se está viendo).
    Suplente sobre titular: el suplente se queda EXACTAMENTE en el hueco del titular, sea cual sea su posición.
@@ -2084,6 +2094,8 @@ function swapInView(a,b){
   if(ia>=0&&ib>=0){slots[ia]=b;slots[ib]=a;msg=`${A} y ${B} cambian de posición`;}
   else if(ia>=0){slots[ia]=b;msg=`Entra ${B} de ${SLOTS[ia].pos[0]}, sale ${A}`;}
   else{slots[ib]=a;msg=`Entra ${A} de ${SLOTS[ib].pos[0]}, sale ${B}`;}
+  const o=xiOwner(UI.psea), bo=o&&o.benchOrder;
+  if(bo&&!(ia>=0&&ib>=0)){const inn=ia>=0?b:a, out=ia>=0?a:b, k=bo.indexOf(inn);if(k>=0)bo[k]=out;}
   setXiSlots(UI.psea,slots);save();closeModal();rerender();
   flashSwap([a,b]); toast(msg,'swap');
   return true;
@@ -2136,8 +2148,6 @@ function openPlayer(id){
     spark=`<div class="spark"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución de la media"><polyline class="ln" points="${rows.map((r,i)=>`${x(i)},${y(r.m)}`).join(' ')}"/>${rows.map((r,i)=>`<circle class="dt" cx="${x(i)}" cy="${y(r.m)}" r="4"/><text class="v" x="${x(i)}" y="${y(r.m)-9}" text-anchor="middle">${r.m}</text><text x="${x(i)}" y="${H-2}" text-anchor="middle">${r.label.slice(2)}</text>`).join('')}</svg></div>`;
   }
   const gk=p.pos==='POR';
-  let swapBtn='';
-  if(current==='plantilla'){const {sq,ids}=viewXI();if(sq.some(x=>x.id==p.id&&!x.loan))swapBtn=`<button class="btn secondary sm pm-swap" data-action="swap" data-id="${p.id}">${ic('swap')}${ids.includes(p.id)?'Sacar del once':'Meter en el once'}</button>`;}
   const played=S.seasons.filter(se=>se.stats[p.id]);
   const titles=played.flatMap(se=>se.titles.map(t=>`${t} ${se.label.slice(2)}`));
   const pichichi=played.filter(se=>{const L=leaders(se);return L.g&&L.g.p.id==p.id&&L.g.g>0;}).map(se=>se.label);
@@ -2152,7 +2162,7 @@ function openPlayer(id){
   openModal(`<div class="modal-h" style="margin-bottom:0"><div></div><button class="icon-btn" data-action="close-modal" aria-label="Cerrar">${ic('x')}</button></div>
   <div class="pm-head"><div class="sh">${shirt({num:p.num,name:surname(p.name),back:true,gk})}</div>
     <div><h2>${esc(p.name)}</h2><div class="meta">${posb(p.pos)} Dorsal ${p.num} · ${p.age} años · <span class="nat">${flag(p.nat)}${esc(natName(p.nat))}</span> ${tags(p)}</div>
-    <div class="pm-rates"><div><span>Media</span><b>${p.ovr}</b></div><div><span>En el club desde</span><b>${rows.length?rows[0].label:S.current.label}</b></div></div>${swapBtn}</div></div>
+    <div class="pm-rates"><div><span>Media</span><b>${p.ovr}</b></div><div><span>En el club desde</span><b>${rows.length?rows[0].label:S.current.label}</b></div></div></div></div>
   ${rows.length?`<div class="pm-sum"><div><b>${t.pj}</b><span>Partidos</span></div><div><b>${t.g}</b><span>Goles</span></div><div><b>${t.a}</b><span>Asistencias</span></div></div>
   ${hl?`<div class="pm-hl">${hl}</div>`:''}
   ${spark?`<div class="pm-sec">Evolución de la media</div>${spark}`:''}
@@ -2507,9 +2517,7 @@ const ACTIONS={
   vtab(b){UI.vtab=b.dataset.t;rerender();},
   'aw-row-add'(){$('#awRows').insertAdjacentHTML('beforeend',awardRow());},
   'aw-row-del'(b){b.closest('.aw-row').remove();},
-  swap(b){openSwap(+b.dataset.id);},
-  'do-swap'(b){swapInView(+b.dataset.a,+b.dataset.b);},
-  'xi-auto'(){const o=xiOwner(UI.psea);delete o.xiSlots;delete o.xi;save();rerender();toast('Once automático por media','refresh');},
+  'xi-auto'(){const o=xiOwner(UI.psea);delete o.xiSlots;delete o.xi;delete o.benchOrder;save();rerender();toast('Once automático por media','refresh');},
   titles(b){openTitles(+b.dataset.i);},
   tsel(b){const t=b.dataset.t;tdraft=tdraft.includes(t)?tdraft.filter(x=>x!==t):[...tdraft,t];$('#modalRoot .modal').innerHTML=titlesModal();},
   'titles-save'(){const se=S.seasons[tIdx];se.titles=[...new Set([...titlesFor(se.div),...tdraft])].filter(t=>tdraft.includes(t));save();closeModal();rerender();toast(`Títulos de la ${se.label} actualizados`,'trophy');},
@@ -2604,9 +2612,11 @@ function slotOfTarget(t){
   return i>=0?slotsF(FORM_F)[i].pos[0]:'';
 }
 function ghostText(src,t){
-  if(!t)return src.group==='xi'?'Suéltalo sobre otro jugador':'Suéltalo sobre un titular';
+  const inForm=!!src.item.closest('#seasonForm');
+  if(!t)return src.group==='xi'?'Suéltalo sobre otro jugador':inForm?'Suéltalo sobre un titular':'Suéltalo sobre un titular o un suplente';
   const other=surname(byId(t.dataset.dragId).name), tXI=dragGroup(t)==='xi';
   if(src.group==='xi'&&tXI)return `Cambia de posición con ${other}`;
+  if(src.group==='bench'&&!tXI)return `Ocupa el sitio de ${other} en el banquillo`;
   if(src.group==='xi')return `Sale del once · entra ${other}`;
   return `Entra de ${slotOfTarget(t)} por ${other}`;
 }
@@ -2620,7 +2630,8 @@ function startDrag(x,y){
   p.item.classList.add('drag-src'); document.body.classList.add('is-dragging');
   const scope=p.item.closest('#seasonForm')||$('#main');
   /* un titular también se puede soltar sobre otro titular para cambiarles la posición */
-  DRAG.targets=[...scope.querySelectorAll('[data-drag-id]')].filter(t=>t!==p.item&&(dragGroup(t)!==p.group||p.group==='xi'));
+  const inForm=!!p.item.closest('#seasonForm');
+  DRAG.targets=[...scope.querySelectorAll('[data-drag-id]')].filter(t=>t!==p.item&&(dragGroup(t)!==p.group||p.group==='xi'||(!inForm&&p.group==='bench')));
   DRAG.targets.forEach((t,i)=>{t.classList.add('drop-cand');t.style.setProperty('--jd',`${-(i%5)*.06}s`);});
   vib(15);
   moveDrag(x,y); scrollLoop();
@@ -2653,7 +2664,7 @@ function endDrag(){
   if(g){g.classList.add('gone');setTimeout(()=>g.remove(),180);}
   if(!t)return;
   const a=s.id, b=+t.dataset.dragId;
-  const ok=s.item.closest('#seasonForm')?formSwapRows(a,b):swapInView(a,b);
+  const ok=s.item.closest('#seasonForm')?formSwapRows(a,b):s.group==='bench'&&dragGroup(t)==='bench'?reorderBench(a,b):swapInView(a,b);
   if(ok)vib([12,40,20]);
 }
 document.addEventListener('pointerdown',e=>{
