@@ -635,10 +635,16 @@ select.input{-webkit-appearance:none;appearance:none;background:#fff var(--chev)
 .pm-sum div{padding:10px 6px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);text-align:center}
 .pm-sum b{display:block;font:700 26px/1.05 var(--font-d)}
 .pm-sum span{font-size:11.5px;color:var(--muted);font-weight:600}
-.pm-hl{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--gold-soft);border:1px solid var(--gold-line)}
-.pm-hl div{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text-2)}
-.pm-hl .ic{width:17px;height:17px;color:var(--gold);margin-top:2px}
-.pm-hl b{color:var(--text)}
+/* vitrina del jugador en su ficha: premios individuales y títulos con el club, con imagen y ×N */
+.pm-hl{display:flex;flex-direction:column;gap:14px;margin-top:14px;padding:14px;border-radius:14px;background:var(--gold-soft);border:1px solid var(--gold-line)}
+.pm-shelf-t{display:block;margin-bottom:8px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold)}
+.pm-shelf{display:flex;flex-wrap:wrap;gap:10px}
+.pm-tro{position:relative;width:66px;height:70px;display:grid;place-items:center;border-radius:12px;background:#fff;border:1px solid var(--gold-line);outline:none;transition:transform .15s,box-shadow .15s}
+.pm-tro:hover,.pm-tro:focus-visible{transform:translateY(-2px);box-shadow:0 8px 16px -10px rgba(154,111,5,.6)}
+.pm-tro>svg,.pm-tro>.tro-img{width:48px;height:52px;filter:drop-shadow(0 3px 4px rgba(40,50,60,.25))}
+.pm-x{position:absolute;top:-7px;right:-7px;min-width:24px;height:20px;padding:0 6px;display:grid;place-items:center;border-radius:99px;background:var(--gold);color:#fff;font:700 12px/1 var(--font-d);box-shadow:0 0 0 2px #fff}
+.pm-tro::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--text);color:#fff;font:600 11.5px/1.3 var(--font);padding:5px 8px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:5}
+.pm-tro:hover::after,.pm-tro:focus::after{opacity:1}
 .pm-sec{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px}
 .spark{margin:0 0 4px}
 .spark svg{display:block;width:100%;height:auto;overflow:visible}
@@ -2141,17 +2147,17 @@ function openPlayer(id){
     spark=`<div class="spark"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución de la media"><polyline class="ln" points="${rows.map((r,i)=>`${x(i)},${y(r.m)}`).join(' ')}"/>${rows.map((r,i)=>`<circle class="dt" cx="${x(i)}" cy="${y(r.m)}" r="4"/><text class="v" x="${x(i)}" y="${y(r.m)-9}" text-anchor="middle">${r.m}</text><text x="${x(i)}" y="${H-2}" text-anchor="middle">${r.label.slice(2)}</text>`).join('')}</svg></div>`;
   }
   const gk=p.pos==='POR';
-  const played=S.seasons.filter(se=>se.stats[p.id]);
-  const titles=played.flatMap(se=>se.titles.map(t=>`${t} ${se.label.slice(2)}`));
-  const pichichi=played.filter(se=>{const L=leaders(se);return L.g&&L.g.p.id==p.id&&L.g.g>0;}).map(se=>se.label);
-  const played2=rows.filter(r=>!r.loan), bestS=played2.length?played2.reduce((a,r)=>(gk?r.m>a.m:r.g+r.a>a.g+a.a)?r:a):null;
-  const myAwards=S.seasons.flatMap(se=>(se.awards||[]).filter(w=>w.id==p.id).map(w=>`${w.a} ${se.label.slice(2)}`));
-  const hl=[
-    myAwards.length?`<div>${ic('medal')}<span><b>${myAwards.length} ${myAwards.length===1?'premio individual':'premios individuales'}:</b> ${esc(myAwards.join(' · '))}</span></div>`:'',
-    titles.length?`<div>${ic('trophy')}<span><b>${titles.length} ${titles.length===1?'título':'títulos'} con el club:</b> ${esc(titles.join(' · '))}</span></div>`:'',
-    pichichi.length?`<div>${ic('ball')}<span><b>Pichichi del equipo</b> en ${pichichi.join(', ')}</span></div>`:'',
-    bestS?`<div>${ic('star')}<span><b>Mejor temporada:</b> ${bestS.label} · ${gk?`media ${bestS.m}`:`${bestS.g} goles y ${bestS.a} asistencias`}</span></div>`:''
-  ].join('');
+  /* Vitrina del jugador: sus premios individuales y los títulos que ganó con el club (las temporadas en las
+     que estuvo cedido no cuentan), con la imagen de cada trofeo y ×N veces. El nombre y los años salen al pasar
+     el dedo o el ratón por encima. */
+  const group=list=>Object.values(list.reduce((m,[k,label])=>{(m[k]=m[k]||{k,years:[]}).years.push(label);return m;},{}));
+  const myAwards=group(S.seasons.flatMap(se=>(se.awards||[]).filter(w=>w.id==p.id).map(w=>[w.a,se.label])))
+    .sort((a,b)=>AWARDS.findIndex(([k])=>k===a.k)-AWARDS.findIndex(([k])=>k===b.k));
+  const myTitles=group(S.seasons.filter(se=>se.stats[p.id]&&!isLoan(se,p.id)).flatMap(se=>se.titles.map(t=>[t,se.label])))
+    .sort((a,b)=>b.years.length-a.years.length);
+  const shelfItem=(x,img)=>`<div class="pm-tro" tabindex="0" data-tip="${esc(x.k)} · ${x.years.map(y=>y.slice(2)).join(', ')}" aria-label="${esc(x.k)}: ${x.years.length} ${x.years.length===1?'vez':'veces'} (${x.years.join(', ')})">${img}<span class="pm-x">×${x.years.length}</span></div>`;
+  const hl=(myAwards.length?`<div class="pm-shelf-sec"><span class="pm-shelf-t">Premios individuales</span><div class="pm-shelf">${myAwards.map(x=>shelfItem(x,awardIcon(awardIconOf(x.k)))).join('')}</div></div>`:'')
+    +(myTitles.length?`<div class="pm-shelf-sec"><span class="pm-shelf-t">Títulos con el club</span><div class="pm-shelf">${myTitles.map(x=>shelfItem(x,trophyOf(x.k))).join('')}</div></div>`:'');
   openModal(`<div class="modal-h" style="margin-bottom:0"><div></div><button class="icon-btn" data-action="close-modal" aria-label="Cerrar">${ic('x')}</button></div>
   <div class="pm-head"><div class="sh">${shirt({num:p.num,name:surname(p.name),back:true,gk})}</div>
     <div><h2>${esc(p.name)}</h2><div class="meta">${posb(p.pos)} Dorsal ${p.num} · ${p.age} años · <span class="nat">${flag(p.nat)}${esc(natName(p.nat))}</span> ${tags(p)}</div>
