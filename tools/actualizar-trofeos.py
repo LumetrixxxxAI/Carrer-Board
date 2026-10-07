@@ -20,6 +20,7 @@ def norm(s):
     s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode().lower()
     s = re.sub(r'\.(png|webp|jpe?g)$', '', s)
     s = s.replace('leauge', 'league').replace('champion league', 'champions league')
+    s = re.sub(r'\bone\b', '1', s); s = re.sub(r'\btwo\b', '2', s)  # "Ligue One" = "Ligue 1"
     s = re.sub(r'\b(trofeo|uefa)\b', ' ', s)
     return re.sub(r'[^a-z0-9]+', '', s)
 
