@@ -1903,9 +1903,10 @@ function renderHistoria(){
 const XNAT={URS:'Unión Soviética',TCH:'Checoslovaquia'};
 const teamName=c=>NAT[c]?NAT[c].n:XNAT[c]||c;
 const teamFlag=c=>NAT[c]?flag(c):`<span class="flag flag-old" role="img" aria-label="${esc(teamName(c))}" title="${esc(teamName(c))}"></span>`;
-/* [año, selección campeona]. Alemania incluye los títulos de la RFA. */
+/* [año en que se jugó, selección campeona, nombre si es otro]. Alemania incluye los títulos de la RFA.
+   La Eurocopa 2020 se jugó en 2021: cuenta como 2021 para saber si es de antes de tu carrera. */
 const WC_HIST=[[1930,'URU'],[1934,'ITA'],[1938,'ITA'],[1950,'URU'],[1954,'GER'],[1958,'BRA'],[1962,'BRA'],[1966,'ENG'],[1970,'BRA'],[1974,'GER'],[1978,'ARG'],[1982,'ITA'],[1986,'ARG'],[1990,'GER'],[1994,'BRA'],[1998,'FRA'],[2002,'BRA'],[2006,'ITA'],[2010,'ESP'],[2014,'GER'],[2018,'FRA'],[2022,'ARG'],[2026,'ESP']];
-const EURO_HIST=[[1960,'URS'],[1964,'ESP'],[1968,'ITA'],[1972,'GER'],[1976,'TCH'],[1980,'GER'],[1984,'FRA'],[1988,'NED'],[1992,'DEN'],[1996,'GER'],[2000,'FRA'],[2004,'GRE'],[2008,'ESP'],[2012,'ESP'],[2016,'POR'],[2020,'ITA'],[2024,'ESP']];
+const EURO_HIST=[[1960,'URS'],[1964,'ESP'],[1968,'ITA'],[1972,'GER'],[1976,'TCH'],[1980,'GER'],[1984,'FRA'],[1988,'NED'],[1992,'DEN'],[1996,'GER'],[2000,'FRA'],[2004,'GRE'],[2008,'ESP'],[2012,'ESP'],[2016,'POR'],[2021,'ITA','2020'],[2024,'ESP']];
 const COPA_HIST=[[1916,'URU'],[1917,'URU'],[1919,'BRA'],[1920,'URU'],[1921,'ARG'],[1922,'BRA'],[1923,'URU'],[1924,'URU'],[1925,'ARG'],[1926,'URU'],[1927,'ARG'],[1929,'ARG'],[1935,'URU'],[1937,'ARG'],[1939,'PER'],[1941,'ARG'],[1942,'URU'],[1945,'ARG'],[1946,'ARG'],[1947,'ARG'],[1949,'BRA'],[1953,'PAR'],[1955,'ARG'],[1956,'URU'],[1957,'ARG'],[1959,'ARG'],[1959,'URU'],[1963,'BOL'],[1967,'URU'],[1975,'PER'],[1979,'PAR'],[1983,'URU'],[1987,'URU'],[1989,'BRA'],[1991,'ARG'],[1993,'ARG'],[1995,'URU'],[1997,'BRA'],[1999,'BRA'],[2001,'COL'],[2004,'BRA'],[2007,'BRA'],[2011,'URU'],[2015,'CHI'],[2016,'CHI'],[2019,'BRA'],[2021,'ARG'],[2024,'ARG']];
 const CUP_COMPS=[['wc','Mundial','tall',WC_HIST],['euro','Eurocopa','cup',EURO_HIST],['copa','Copa América','vase',COPA_HIST]];
 const compName=k=>(CUP_COMPS.find(c=>c[0]===k)||[,k])[1];
@@ -1944,8 +1945,8 @@ function rankRows(rows){
   return rows;
 }
 function cupRanking(k,hist){
-  const y0=careerY0(), m={}, add=(team,y,mine)=>{(m[team]=m[team]||{team,name:teamName(team),years:[]}).years.push({y,mine});};
-  hist.forEach(([y,t])=>{if(y<y0)add(t,y,false);});
+  const y0=careerY0(), m={}, add=(team,y,mine,l)=>{(m[team]=m[team]||{team,name:teamName(team),years:[]}).years.push({y,mine,l});};
+  hist.forEach(([y,t,l])=>{if(y<y0)add(t,y,false,l);});
   intlCups().filter(c=>c.comp===k).forEach(c=>add(c.team,c.year,true));
   return rankRows(Object.values(m));
 }
@@ -1963,7 +1964,7 @@ function ballonRanking(){
   S.seasons.forEach(se=>{const w=seasonBallon(se);if(w)add(w.name,w.nat,seasonYear(se.label),true,w.p);});
   return rankRows([...m.values()]);
 }
-const yChips=(years,max=5)=>years.slice(0,max).map(y=>`<span class="rk-chip ${y.mine?'mine':''}" ${y.mine?'title="En tu carrera"':''}>${y.y}</span>`).join('')+(years.length>max?`<span class="rk-chip more">+${years.length-max}</span>`:'');
+const yChips=(years,max=5)=>years.slice(0,max).map(y=>`<span class="rk-chip ${y.mine?'mine':''}" ${y.mine?'title="En tu carrera"':''}>${y.l||y.y}</span>`).join('')+(years.length>max?`<span class="rk-chip more">+${years.length-max}</span>`:'');
 const rkRow=(r,main,act)=>`<div class="rk-row ${r.rank===1?'top':''}"><span class="rk-pos ${r.rank<=3?'r'+r.rank:''}">${r.rank}</span>
   <${act?'button':'div'} class="rk-main" ${act||''}>${main}<span class="rk-n"><small>×</small>${r.n}</span></${act?'button':'div'}>
   <div class="rk-seasons">${yChips(r.years)}</div></div>`;
