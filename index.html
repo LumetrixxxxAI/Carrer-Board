@@ -2594,7 +2594,8 @@ function openAccount(){
 /* Usuario nuevo: crea su carrera (club, liga y temporada en la que empieza) y la app arranca vacía */
 /* add=true (Pro): una carrera más, sin tocar las que ya tienes */
 function openNewCareer(add){
-  const seasons=['2023/24','2024/25','2025/26','2026/27','2027/28','2028/29','2029/30'];
+  /* de la 2017/18 (FIFA 18) a la 2026/27, la del juego de ahora */
+  const seasons=Array.from({length:10},(_,i)=>{const y=2017+i;return `${y}/${String(y+1).slice(2)}`;});
   openModal(`${mHead(add?'Nueva carrera':'Crea tu carrera',add?`Empiezas otra carrera con la plantilla vacía. La del ${esc(S.club.name)} se queda guardada en Mis carreras.`:'Empiezas con la plantilla vacía: añadirás a tus jugadores al apuntar tu primera temporada.')}
   <form class="form" data-form="career" autocomplete="off">
     ${add?'<input type="hidden" name="mode" value="add">':''}
