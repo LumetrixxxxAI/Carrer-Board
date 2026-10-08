@@ -4,6 +4,7 @@
 // - Cada usuario solo puede leer y escribir sus propios datos (users/{su uid}/...).
 // - El plan (users/{uid}, campo plan: "pro") solo lo puede poner el servidor (el webhook de Stripe)
 //   o tú a mano desde la consola. La app solo lo lee: nadie puede hacerse Pro a sí mismo.
+//   El dueño de la app es Pro siempre, sin pagar (isAppOwner).
 // - Cada carrera es users/{uid}/careers/{id}. Con el plan Amateur solo se puede crear la "principal";
 //   con Pro, todas las que quieras. (Las que ya existen se pueden seguir guardando aunque dejes Pro.)
 // - La carrera se guarda con un número de versión (rev). Solo se acepta la versión siguiente (rev + 1):
@@ -21,6 +22,11 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/users/$(uid))
         && get(/databases/$(database)/documents/users/$(uid)).data.get('plan', '') == 'pro';
     }
+    // Dueño de la app: Pro para siempre sin pagar. Va la huella SHA-256 de su correo, no el correo.
+    function isAppOwner() {
+      return request.auth.token.get('email_verified', false) == true
+        && hashing.sha256(request.auth.token.get('email', '').lower()).toHexString().lower() == '27b0fb7c106e096d6c89a356d09de46c83e13769e3f9789584737684550acd5f';
+    }
     function validCareer() {
       let d = request.resource.data;
       return d.data is string && d.data.size() > 20 && d.data.size() < 1000000 && d.rev is int;
@@ -33,7 +39,7 @@ service cloud.firestore {
       match /careers/{careerId} {
         allow read: if isOwner(uid);
         allow create: if isOwner(uid) && validCareer() && request.resource.data.rev == 1
-                      && (careerId == 'principal' || isPro(uid));
+                      && (careerId == 'principal' || isPro(uid) || isAppOwner());
         allow update: if isOwner(uid) && validCareer() && request.resource.data.rev == resource.data.rev + 1;
         allow delete: if isOwner(uid);
 

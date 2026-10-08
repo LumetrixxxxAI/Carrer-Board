@@ -2645,6 +2645,15 @@ let PLAN=(()=>{try{return localStorage.getItem('cb-plan-last')==='pro'?'pro':'fr
 const FREE_SEASONS=5;
 const isPro=()=>PLAN==='pro';
 const seasonsFull=()=>!isPro()&&S.seasons.length>=FREE_SEASONS;
+/* Cuentas Pro para siempre, sin pagar (el dueño de la app). Va la huella SHA-256 del correo, no el correo,
+   porque el código es público. Las reglas de Firestore tienen la misma huella. */
+const PRO_FREE=['27b0fb7c106e096d6c89a356d09de46c83e13769e3f9789584737684550acd5f'];
+let OWNER_PRO=false;
+async function ownerPro(u){
+  if(!u||!u.email||!u.emailVerified||!(window.crypto&&crypto.subtle))return false;
+  try{const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(u.email.trim().toLowerCase()));
+    return PRO_FREE.includes([...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join(''));}catch(e){return false;}
+}
 function setPlan(p){
   p=p==='pro'?'pro':'free';
   try{if(AUTH_USER)localStorage.setItem('cb-plan-'+AUTH_USER.uid,p);localStorage.setItem('cb-plan-last',p);}catch(e){}
@@ -2986,6 +2995,7 @@ window.onAuthUser=async u=>{
   if(u){
     /* el plan guardado en este dispositivo vale hasta que llegue el de tu cuenta */
     try{PLAN=localStorage.getItem('cb-plan-'+u.uid)==='pro'?'pro':'free';}catch(e){}
+    OWNER_PRO=await ownerPro(u); if(OWNER_PRO)setPlan('pro');
     applyPrefs();
     if(window.CBDB)watchPlan(u.uid);
     if($('#app').hidden)enterApp(u,true);else refreshHeader();
@@ -3015,7 +3025,7 @@ const setActiveCid=(uid,cid)=>{try{localStorage.setItem(ACTIVE_K(uid),cid);}catc
 function watchPlan(uid){
   if(CLOUD.planUid===uid)return;
   CLOUD.unplan&&CLOUD.unplan(); CLOUD.planUid=uid;
-  CLOUD.unplan=window.CBDB.watchUser(uid,d=>setPlan(d&&d.plan));
+  CLOUD.unplan=window.CBDB.watchUser(uid,d=>setPlan(OWNER_PRO?'pro':d&&d.plan));
 }
 const SYNC_TXT={ok:'Guardado en tu cuenta',pending:'Guardando…',saving:'Guardando…',off:'Sin conexión: está guardado en este dispositivo y se subirá solo al volver',err:'No se ha podido guardar en tu cuenta. Está guardado en este dispositivo'};
 function setSync(st){
@@ -3136,6 +3146,7 @@ function cloudLogout(){
   clearTimeout(CLOUD.timer); CLOUD.unwatch&&CLOUD.unwatch(); CLOUD.unplan&&CLOUD.unplan();
   Object.assign(CLOUD,{on:false,uid:null,cid:'principal',rev:0,unwatch:null,unplan:null,planUid:null,pendingRemote:null}); setSync('');
   try{localStorage.removeItem('cb-plan-last');}catch(e){}
+  OWNER_PRO=false;
   if(PLAN!=='free'){PLAN='free';applyPrefs();refreshHeader();}
 }
 window.addEventListener('online',()=>{if(AUTH_USER&&window.CBDB&&!CLOUD.on)cloudLogin(AUTH_USER);else if(CLOUD.on&&CLOUD.status==='off')setSync('saving');});
