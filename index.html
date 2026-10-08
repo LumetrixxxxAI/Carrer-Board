@@ -2624,6 +2624,7 @@ function createCareer(fd){
   if(add)startWatch(CLOUD.uid);
   save(); setKitVar(); refreshHeader(); closeModal(); screen('app'); go('inicio');
   toast(add?`Nueva carrera: ${name}. Las demás están en Mis carreras`:`Carrera creada: ${name}`,'check');
+  openCrest(true); /* lo siguiente: el escudo de tu club (luego se cambia en Configuración) */
 }
 
 /* ---------- Configuración ----------
@@ -2818,7 +2819,7 @@ function crestModal(){
   const symThumb=k=>`<svg class="sym-thumb" viewBox="0 0 24 24" aria-hidden="true" style="--cs-bg:${c.trim}"><circle cx="12" cy="12" r="12" fill="${c.trim}"/>${CREST_SYMBOLS[k][1]?`<g fill="${c.accent}" transform="translate(12 12) scale(.78) translate(-12 -12)">${CREST_SYMBOLS[k][1]}</g>`:'<path d="M7 17 17 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"/>'}</svg>`;
   const syms=Object.keys(CREST_SYMBOLS).map(k=>opt('crest-sym','symbol',k,CREST_SYMBOLS[k][0],symThumb(k))).join('');
   const cols=[['c1','Principal'],['c2','Secundario'],['trim','Borde y franja'],['accent','Símbolo']].map(([k,l])=>`<label class="col-in">${l}<input type="color" value="${c[k]}" data-crest="${k}"></label>`).join('');
-  return `${mHead('Escudo del club','Así se verá tu escudo en toda la app')}
+  return `${CREST_FIRST?mHead(`Crea el escudo del ${esc(S.club.name)}`,'Elige forma, diseño, símbolo y colores. Lo puedes cambiar cuando quieras en Configuración.'):mHead('Escudo del club','Así se verá tu escudo en toda la app')}
   <div class="crest-prev" id="crestPrev">${crestPreview()}</div>
   <div class="kit-block"><label class="flabel" for="crestShort">Siglas</label><input class="input crest-short" id="crestShort" data-crest="short" value="${esc(c.short)}" maxlength="3" placeholder="Ej. RBB"></div>
   <div class="kit-block"><span class="flabel">Forma</span><div class="pat-row crest-opts">${shapes}</div></div>
@@ -2826,12 +2827,14 @@ function crestModal(){
   <div class="kit-block"><span class="flabel">Símbolo</span><div class="pat-row crest-opts">${syms}</div></div>
   <div class="kit-block"><span class="flabel">Colores</span><div class="colors">${cols}</div>
     <button class="link crest-fromkit" data-action="crest-from-kit">${ic('shirt')}Usar los colores de la camiseta</button></div>
-  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="crest-save">${ic('check')}Guardar escudo</button></div>`;
+  <div class="modal-f"><button class="btn secondary" data-action="${CREST_FIRST?'crest-later':'close-modal'}">${CREST_FIRST?'Ahora no':'Cancelar'}</button><button class="btn primary" data-action="crest-save">${ic('check')}Guardar escudo</button></div>`;
 }
 function crestPreview(){
   return `<div class="cp-big">${crest(cdraft,cdraft.short)}</div><div class="cp-side"><div class="cp-head">${crest(cdraft,cdraft.short)}<b>${esc(S.club.name)}</b></div><small>Así sale arriba, en el menú</small></div>`;
 }
-function openCrest(){cdraft={...clone(crestOf()),short:clubShort()};openModal(crestModal());}
+/* first=true: justo después de crear la carrera */
+let CREST_FIRST=false;
+function openCrest(first){CREST_FIRST=first===true;cdraft={...clone(crestOf()),short:clubShort()};openModal(crestModal());}
 function refreshCrest(){const m=$('#modalRoot .modal');if(m){const y=m.scrollTop;m.innerHTML=crestModal();m.scrollTop=y;}}
 function openCheckout(){
   const info={n:'Career Board Pro',p:'3,99 €',per:'al mes · cancela cuando quieras'};
@@ -3194,6 +3197,7 @@ const ACTIONS={
   'crest-pat'(b){cdraft.pattern=b.dataset.v;refreshCrest();},
   'crest-sym'(b){cdraft.symbol=b.dataset.v;refreshCrest();},
   'crest-from-kit'(){const k=S.kit;Object.assign(cdraft,{c1:k.c1,c2:k.c2,trim:k.trim,pattern:['stripes','hoops','halves','sash'].includes(k.pattern)?k.pattern:'plain'});refreshCrest();},
+  'crest-later'(){closeModal();toast('Tu escudo lo puedes editar cuando quieras en Configuración','shield');},
   'crest-save'(){
     const {short,...c}=cdraft, s=(short||'').trim().toUpperCase().slice(0,3);
     S.crest=c; if(s)S.club.short=s; else delete S.club.short;
