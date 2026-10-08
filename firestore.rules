@@ -2,6 +2,10 @@
 // Se pegan en la consola de Firebase: Firestore Database › Reglas › Publicar.
 //
 // - Cada usuario solo puede leer y escribir sus propios datos (users/{su uid}/...).
+// - El plan (users/{uid}, campo plan: "pro") solo lo puede poner el servidor (el webhook de Stripe)
+//   o tú a mano desde la consola. La app solo lo lee: nadie puede hacerse Pro a sí mismo.
+// - Cada carrera es users/{uid}/careers/{id}. Con el plan Amateur solo se puede crear la "principal";
+//   con Pro, todas las que quieras. (Las que ya existen se pueden seguir guardando aunque dejes Pro.)
 // - La carrera se guarda con un número de versión (rev). Solo se acepta la versión siguiente (rev + 1):
 //   así una versión antigua (otro móvil, una pestaña vieja) nunca puede pisar a una más nueva.
 // - Las copias de seguridad (backups) solo se pueden crear: nadie puede cambiarlas ni borrarlas,
@@ -13,17 +17,23 @@ service cloud.firestore {
     function isOwner(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+    function isPro(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+        && get(/databases/$(database)/documents/users/$(uid)).data.get('plan', '') == 'pro';
+    }
     function validCareer() {
       let d = request.resource.data;
       return d.data is string && d.data.size() > 20 && d.data.size() < 1000000 && d.rev is int;
     }
 
     match /users/{uid} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if false;
 
       match /careers/{careerId} {
         allow read: if isOwner(uid);
-        allow create: if isOwner(uid) && validCareer() && request.resource.data.rev == 1;
+        allow create: if isOwner(uid) && validCareer() && request.resource.data.rev == 1
+                      && (careerId == 'principal' || isPro(uid));
         allow update: if isOwner(uid) && validCareer() && request.resource.data.rev == resource.data.rev + 1;
         allow delete: if isOwner(uid);
 

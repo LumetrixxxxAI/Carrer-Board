@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<script>/* tema guardado (claro, oscuro o el del dispositivo) antes de pintar la página */
-try{var t=((JSON.parse(localStorage.getItem('careerboard-boceto-v4'))||{}).settings||{}).theme;if(t==='auto')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script>/* tema guardado (claro, oscuro, el del dispositivo o el de tu club) antes de pintar la página */
+(function(){try{var d=document.documentElement,t=((JSON.parse(localStorage.getItem('careerboard-boceto-v4'))||{}).settings||{}).theme;if(t==='auto')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+if(t==='club'){var v=localStorage.getItem('cb-plan-last')==='pro'&&JSON.parse(localStorage.getItem('cb-club-vars')||'null');t='light';if(v){for(var k in v)d.style.setProperty(k,v[k]);d.dataset.club='1';document.querySelector('meta[name="theme-color"]').content=v['--club-hdr'];}}
+if(t)d.dataset.theme=t;}catch(e){}})();</script>
 <title>Career Board · Modo Carrera</title>
 <meta name="description" content="Boceto de Career Board: apunta al final de cada temporada los goles, asistencias, partidos y medias de tu plantilla del modo carrera.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -258,9 +260,10 @@ h1,h2,h3,p{margin:0}
   .club-btn .cname,.pro-pill .pl{display:none}
   .pro-pill{width:34px;padding:0;justify-content:center}
   .main{padding:20px 16px calc(var(--tabbar) + 32px)}
-  .bottom-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:30;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:var(--bar-bg);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+  .bottom-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:30;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:var(--bar-bg);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
   .bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:11px;font-weight:600;color:var(--muted)}
   .bn-item.active{color:var(--green-d)}
+  .bn-item span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.01em}
 }
 
 /* ---------- Estructura de página ---------- */
@@ -913,6 +916,73 @@ button.m-row:hover{background:var(--surface-2)}
   .seg button .ic{display:none}
   .toolbar .seg{align-self:flex-start}
 }
+
+/* ---------- Plan Pro: avisos y etiquetas ---------- */
+.pro-pill.on{background:linear-gradient(135deg,#f7d061,#d9a21b);color:#3b2a00;border-color:#d9a21b}
+.pro-gate{display:flex;gap:14px;padding:16px;border-radius:14px;background:var(--gold-soft);border:1px solid var(--gold-line);color:var(--text-2);font-size:14px;line-height:1.5}
+.pro-gate>.ic{width:26px;height:26px;flex:none;color:var(--gold)}
+.pro-gate p+p{margin-top:8px}
+.pro-gate .pg-price b{color:var(--text)}
+/* ---------- Mis carreras ---------- */
+.car-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.car-row .car-open{flex:1;min-width:0;margin-bottom:0}
+.car-row .car-open>div{min-width:0}
+.car-row .car-open b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.car-row>.icon-btn:hover{color:var(--red);background:var(--red-soft)}
+.car-load{display:flex;align-items:center;gap:10px;padding:10px 4px 14px;color:var(--muted);font-size:13.5px}
+.car-load .spin{width:16px;height:16px}
+/* ---------- Tema en Configuración ---------- */
+.set-row.stack{flex-direction:column;align-items:stretch;gap:10px}
+.set-row.stack .ctl{justify-content:flex-start;width:100%}
+.theme-seg .ts-crest{display:inline-flex}
+.theme-seg .ts-crest .crest{width:14px;height:auto}
+.theme-seg .tag-pro{padding:1px 5px;font-size:9.5px;margin-left:2px}
+@media (max-width:640px){.theme-seg{display:grid;grid-template-columns:1fr 1fr;width:100%}.theme-seg button{justify-content:center}}
+/* ---------- Tema "Mi club" (Pro): la cabecera con el color principal de la camiseta y los detalles con el del club ---------- */
+html[data-club] .hdr{background:var(--club-hdr);border-bottom:3px solid var(--club-stripe);-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-club] .hdr .brand .wm,html[data-club] .hdr .brand .wm span{color:var(--club-on)}
+html[data-club] .hdr .tab{color:var(--club-on);opacity:.75}
+html[data-club] .hdr .tab:hover,html[data-club] .hdr .tab.active{opacity:1}
+html[data-club] .hdr .tab.active::after{background:var(--club-on);bottom:0}
+html[data-club] .club-btn{color:var(--club-on);background:transparent;border-color:rgba(127,127,127,.4);border-color:color-mix(in srgb,var(--club-on) 32%,transparent)}
+html[data-club] .club-btn:hover{background:color-mix(in srgb,var(--club-on) 10%,transparent)}
+html[data-club] .club-btn .ic{color:var(--club-on);opacity:.75}
+html[data-club] .hdr .sync{color:var(--club-on)}
+html[data-club] .hdr .sync:hover{background:color-mix(in srgb,var(--club-on) 12%,transparent)}
+html[data-club] .hdr .avatar{box-shadow:0 0 0 2px var(--club-on)}
+/* las medias altas y la posición de los medios siguen en verde: no son el color del club */
+html[data-club] .r-hi,html[data-club] .posb.MED{background:#e8f6ed;color:#0f6d32}
+html[data-club] .tok-r.r-hi{color:#0f6d32}
+/* ---------- Internacional ---------- */
+.intl-lock{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--radius);background:var(--gold-soft);border:1px solid var(--gold-line);margin-bottom:16px}
+.intl-lock>.ic{width:24px;height:24px;flex:none;color:var(--gold)}
+.intl-lock>div{flex:1;min-width:0}
+.intl-lock b{display:block;font-size:14.5px}
+.intl-lock p{font-size:13px;color:var(--text-2);margin-top:2px}
+@media (max-width:640px){.intl-lock{flex-wrap:wrap}.intl-lock .btn{width:100%}}
+.intl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start;margin-bottom:16px}
+.rk-flag{width:30px;flex:none;display:grid;place-items:center;font-size:20px}
+.rk-flag .flag{border-radius:3px}
+.flag-old{display:inline-block;width:1.333em;height:1em;border-radius:2px;background:repeating-linear-gradient(135deg,var(--chip) 0 4px,var(--line-2) 4px 8px);box-shadow:0 0 0 1px rgba(16,26,20,.14);vertical-align:-.12em}
+.rk-chip.mine{background:var(--green-soft);border-color:var(--green-soft-2);color:var(--green-d)}
+.rk-chip.more{background:transparent;border-style:dashed;color:var(--muted)}
+.bo-club{display:inline-flex;margin-left:6px;vertical-align:-2px}
+.bo-club .crest{width:14px;height:auto}
+.bo-wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.bo-wrap{grid-template-columns:minmax(0,1fr)}}
+.bo-more{margin-top:12px}
+.bo-list{display:flex;flex-direction:column;gap:8px}
+.bo-row{display:flex;align-items:center;gap:12px;min-height:54px;padding:8px 10px 8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.bo-y{display:flex;flex-direction:column;min-width:58px;line-height:1.15}
+.bo-y b{font:700 20px/1 var(--font-d)}
+.bo-y small{font-size:11.5px;color:var(--muted);margin-top:2px}
+.bo-who{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:14px;text-align:left}
+.bo-who b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button.bo-who:hover b{color:var(--green-d)}
+.bo-who .none{color:var(--muted);font-size:13px}
+.bo-row>.icon-btn{width:32px;height:32px}
+.bo-row>.icon-btn:hover{color:var(--red);background:var(--red-soft)}
+.nat-field .nat-flag{position:absolute;left:13px;top:50%;transform:translateY(-50%);display:flex;font-size:15px;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1012,6 +1082,7 @@ button.m-row:hover{background:var(--surface-2)}
         <button class="tab" data-nav="plantilla">Plantilla</button>
         <button class="tab" data-nav="temporadas">Temporadas</button>
         <button class="tab" data-nav="historia">Historia</button>
+        <button class="tab" data-nav="internacional">Internacional</button>
       </nav>
       <div class="hdr-right">
         <button class="club-btn" data-action="career" id="clubBtn"></button>
@@ -1027,6 +1098,7 @@ button.m-row:hover{background:var(--surface-2)}
     <button class="bn-item" data-nav="plantilla"></button>
     <button class="bn-item" data-nav="temporadas"></button>
     <button class="bn-item" data-nav="historia"></button>
+    <button class="bn-item" data-nav="internacional"></button>
   </nav>
 </div>
 
@@ -1103,7 +1175,7 @@ const LOGO='<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height=
    Se edita en Configuración (forma, diseño, símbolo, colores y siglas) y se guarda en S.crest.
    Mientras no se edite, usa los colores de la camiseta. Es un escudo propio: no se usan escudos reales. */
 const isLight=hex=>{const n=parseInt((hex||'#000').slice(1),16);return ((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/1000>170;};
-const clubShort=()=>S.club.short||S.club.name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'CB';
+const clubShort=(s=S)=>s.club.short||s.club.name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'CB';
 /* forma: contorno, franja con las siglas [y, alto, y del texto] y medallón del símbolo [x, y, radio] */
 const CREST_SHAPES={
   shield:{n:'Escudo',d:'M20 1.5 38 6.5V22c0 11-7.6 18.6-18 22.5C9.6 40.6 2 33 2 22V6.5z',band:[0,13,10.6],med:[20,27,6.2]},
@@ -1124,9 +1196,9 @@ const CREST_SYMBOLS={
   none:['Ninguno','']
 };
 /* escudo que se usa: el editado o, si no, uno con los colores de la camiseta */
-function crestOf(){
-  if(S.crest)return S.crest;
-  const k=S.kit;
+function crestOf(s=S){
+  if(s.crest)return s.crest;
+  const k=s.kit;
   return {shape:'shield',pattern:['stripes','hoops','halves','sash'].includes(k.pattern)?k.pattern:'plain',c1:k.c1,c2:k.c2,trim:k.trim,accent:'#f4c84a',symbol:'star'};
 }
 const crestBody=(c,pat)=>{
@@ -1378,7 +1450,7 @@ function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.p
 function save(){saveLocal();cloudQueue();}
 function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 let S=load();
-const UI={htab:'g',scope:'all',open:null,rec:0,psea:'cur',edit:null,vtab:'col'};
+const UI={htab:'g',scope:'all',open:null,rec:0,psea:'cur',edit:null,vtab:'col',itab:'sel',boAll:false};
 let current='inicio';
 
 /* ---------- Utilidades ---------- */
@@ -1410,7 +1482,7 @@ const NATS=[
   ['HUN','hu','Hungría'],['ROU','ro','Rumanía'],['BUL','bg','Bulgaria'],['GEO','ge','Georgia'],['ARM','am','Armenia'],
   ['ISR','il','Israel'],['JAM','jm','Jamaica'],['CRC','cr','Costa Rica'],['HON','hn','Honduras'],['PAN','pa','Panamá'],
   ['DOM','do','República Dominicana'],['CUB','cu','Cuba'],['CPV','cv','Cabo Verde'],['GAB','ga','Gabón'],['COD','cd','RD del Congo'],
-  ['ANG','ao','Angola'],['EQG','gq','Guinea Ecuatorial'],['QAT','qa','Catar'],['NZL','nz','Nueva Zelanda'],['AND','ad','Andorra'],['LUX','lu','Luxemburgo']
+  ['ANG','ao','Angola'],['EQG','gq','Guinea Ecuatorial'],['QAT','qa','Catar'],['NZL','nz','Nueva Zelanda'],['AND','ad','Andorra'],['LUX','lu','Luxemburgo'],['LBR','lr','Liberia']
 ];
 const NAT=Object.fromEntries(NATS.map(([c,i,n])=>[c,{i,n}]));
 const natName=c=>NAT[c]?NAT[c].n:c;
@@ -1419,7 +1491,7 @@ const flag=c=>NAT[c]?`<span class="flag fi fi-${NAT[c].i}" role="img" aria-label
 const tags=p=>`${p.cantera?'<span class="tag cantera">Cantera</span>':''}${p.status?`<span class="tag muted">${esc(p.status)}</span>`:''}`;
 const miniShirt=p=>`<span class="mini-shirt">${shirt({num:p.num,gk:p.pos==='POR'})}</span>`;
 const nextLabel=l=>{const y=parseInt(l.slice(0,4))+1;return `${y}/${String(y+1).slice(2)}`;};
-const setKitVar=()=>document.documentElement.style.setProperty('--kit1',S.kit.c1);
+const setKitVar=()=>{document.documentElement.style.setProperty('--kit1',S.kit.c1);applyPrefs();}; /* (el tema "Mi club" sale de la camiseta) */
 
 /* ---------- Cálculos a partir de las temporadas ---------- */
 const byId=id=>S.players.find(p=>p.id==id);
@@ -1561,10 +1633,11 @@ function renderInicio(){
   </div>
 
   <div class="callout">
-    <span class="ico">${ic('calcheck')}</span>
-    ${S.seasons.length?`<div><b>¿Has terminado la temporada ${S.current.label}?</b><p>Apunta los partidos, goles, asistencias y medias de tu plantilla. Te lleva un par de minutos.</p></div>`
+    <span class="ico">${ic(seasonsFull()?'lock':'calcheck')}</span>
+    ${seasonsFull()?`<div><b>Ya tienes ${FREE_SEASONS} temporadas apuntadas, el máximo del plan Amateur</b><p>Siguen aquí y puedes verlas y editarlas. Para apuntar la ${S.current.label} y las siguientes, hazte Pro.</p></div>`
+      :S.seasons.length?`<div><b>¿Has terminado la temporada ${S.current.label}?</b><p>Apunta los partidos, goles, asistencias y medias de tu plantilla. Te lleva un par de minutos.</p></div>`
       :`<div><b>¡Bienvenido, míster! Tu primera temporada es la ${S.current.label}</b><p>Cuando la termines en el juego, apúntala aquí: añades a tus jugadores y pones sus partidos, goles y asistencias.</p></div>`}
-    <button class="btn primary" data-nav="apuntar">Apuntar temporada ${ic('arrowRight')}</button>
+    ${seasonsFull()?`<button class="btn primary" data-nav="premium">${ic('crown')}Hazte Pro</button>`:`<button class="btn primary" data-nav="apuntar">Apuntar temporada ${ic('arrowRight')}</button>`}
   </div>
 
   <div class="tiles">
@@ -1734,8 +1807,8 @@ function renderTemporadas(){
   const rev=S.seasons.map((se,i)=>({se,i})).reverse();
   return `
   <div class="ph">
-    <div><h1>Temporadas</h1><p>${S.seasons.length} temporadas apuntadas con el ${esc(S.club.name)}</p></div>
-    <div class="ph-actions"><button class="btn primary" data-nav="apuntar">${ic('plus')}Apuntar ${S.current.label}</button></div>
+    <div><h1>Temporadas</h1><p>${S.seasons.length} temporadas apuntadas con el ${esc(S.club.name)}${isPro()?'':` · plan Amateur: ${Math.min(S.seasons.length,FREE_SEASONS)} de ${FREE_SEASONS}`}</p></div>
+    <div class="ph-actions"><button class="btn primary" data-nav="apuntar">${ic(seasonsFull()?'lock':'plus')}Apuntar ${S.current.label}</button></div>
   </div>
   <div class="seasons">
     <div class="card season cur"><div class="s-row"><div class="s-toggle"><span class="pos-big">–</span><div class="s-main"><b>${S.current.label}</b><span>${esc(S.current.div)} · se apunta al terminar</span></div></div><span class="live"><i></i>En juego</span></div></div>
@@ -1820,6 +1893,147 @@ function renderHistoria(){
   ${rows.length?`<div class="podium">${podium.map((r,i)=>`<button class="pod p${i+1}" data-action="player" data-id="${r.p.id}"><div class="pod-shirt">${shirt({num:r.p.num,name:surname(r.p.name),back:true,gk:r.p.pos==='POR'})}<span class="md">${i+1}</span></div><div class="pname">${esc(r.p.name)}</div><small>${r.p.pos}${r.p.status?' · '+esc(r.p.status):''}</small><div class="pv">${r.val}</div><small>${unit}</small></button>`).join('')}</div>
   ${rest.length?`<div class="card">${rest.map((r,i)=>`<button class="rank" data-action="player" data-id="${r.p.id}"><span class="n">${i+4}</span>${miniShirt(r.p)}<div class="who"><b>${esc(r.p.name)} ${r.p.status?`<span class="tag muted">${esc(r.p.status)}</span>`:''}</b><small>${tab==='pj'?posb(r.p.pos):`${r.pj} partidos`}</small></div><div class="track"><i style="width:${Math.max(3,r.val/max*100)}%"></i></div><span class="val">${r.val}</span></button>`).join('')}</div>`:''}`:'<div class="card empty">Sin datos todavía.</div>'}`;
 }
+
+/* ---------- Internacional ----------
+   Selecciones campeonas (Mundial, Eurocopa y Copa América) y ranking del Balón de Oro.
+   Cuenta la historia real hasta el año en que empieza tu carrera; desde ahí cuenta lo que apuntes tú (S.intl),
+   porque en tu modo carrera la historia es otra. Apuntar es de Pro; con el plan Amateur se puede consultar. */
+const XNAT={URS:'Unión Soviética',TCH:'Checoslovaquia'};
+const teamName=c=>NAT[c]?NAT[c].n:XNAT[c]||c;
+const teamFlag=c=>NAT[c]?flag(c):`<span class="flag flag-old" role="img" aria-label="${esc(teamName(c))}" title="${esc(teamName(c))}"></span>`;
+/* [año, selección campeona]. Alemania incluye los títulos de la RFA. */
+const WC_HIST=[[1930,'URU'],[1934,'ITA'],[1938,'ITA'],[1950,'URU'],[1954,'GER'],[1958,'BRA'],[1962,'BRA'],[1966,'ENG'],[1970,'BRA'],[1974,'GER'],[1978,'ARG'],[1982,'ITA'],[1986,'ARG'],[1990,'GER'],[1994,'BRA'],[1998,'FRA'],[2002,'BRA'],[2006,'ITA'],[2010,'ESP'],[2014,'GER'],[2018,'FRA'],[2022,'ARG'],[2026,'ESP']];
+const EURO_HIST=[[1960,'URS'],[1964,'ESP'],[1968,'ITA'],[1972,'GER'],[1976,'TCH'],[1980,'GER'],[1984,'FRA'],[1988,'NED'],[1992,'DEN'],[1996,'GER'],[2000,'FRA'],[2004,'GRE'],[2008,'ESP'],[2012,'ESP'],[2016,'POR'],[2020,'ITA'],[2024,'ESP']];
+const COPA_HIST=[[1916,'URU'],[1917,'URU'],[1919,'BRA'],[1920,'URU'],[1921,'ARG'],[1922,'BRA'],[1923,'URU'],[1924,'URU'],[1925,'ARG'],[1926,'URU'],[1927,'ARG'],[1929,'ARG'],[1935,'URU'],[1937,'ARG'],[1939,'PER'],[1941,'ARG'],[1942,'URU'],[1945,'ARG'],[1946,'ARG'],[1947,'ARG'],[1949,'BRA'],[1953,'PAR'],[1955,'ARG'],[1956,'URU'],[1957,'ARG'],[1959,'ARG'],[1959,'URU'],[1963,'BOL'],[1967,'URU'],[1975,'PER'],[1979,'PAR'],[1983,'URU'],[1987,'URU'],[1989,'BRA'],[1991,'ARG'],[1993,'ARG'],[1995,'URU'],[1997,'BRA'],[1999,'BRA'],[2001,'COL'],[2004,'BRA'],[2007,'BRA'],[2011,'URU'],[2015,'CHI'],[2016,'CHI'],[2019,'BRA'],[2021,'ARG'],[2024,'ARG']];
+const CUP_COMPS=[['wc','Mundial','tall',WC_HIST],['euro','Eurocopa','cup',EURO_HIST],['copa','Copa América','vase',COPA_HIST]];
+const compName=k=>(CUP_COMPS.find(c=>c[0]===k)||[,k])[1];
+/* Balón de Oro (France Football), de 1956 a hoy: [año, jugador, nacionalidad]. En 2020 no se entregó.
+   El de 2026 se entrega el 26 de octubre de 2026: cuando se sepa, se añade aquí. */
+const BALLON_HIST=[[1956,'Stanley Matthews','ENG'],[1957,'Alfredo Di Stéfano','ESP'],[1958,'Raymond Kopa','FRA'],[1959,'Alfredo Di Stéfano','ESP'],[1960,'Luis Suárez Miramontes','ESP'],
+  [1961,'Omar Sívori','ITA'],[1962,'Josef Masopust','CZE'],[1963,'Lev Yashin','RUS'],[1964,'Denis Law','SCO'],[1965,'Eusébio','POR'],[1966,'Bobby Charlton','ENG'],[1967,'Flórián Albert','HUN'],
+  [1968,'George Best','NIR'],[1969,'Gianni Rivera','ITA'],[1970,'Gerd Müller','GER'],[1971,'Johan Cruyff','NED'],[1972,'Franz Beckenbauer','GER'],[1973,'Johan Cruyff','NED'],[1974,'Johan Cruyff','NED'],
+  [1975,'Oleg Blokhin','UKR'],[1976,'Franz Beckenbauer','GER'],[1977,'Allan Simonsen','DEN'],[1978,'Kevin Keegan','ENG'],[1979,'Kevin Keegan','ENG'],[1980,'Karl-Heinz Rummenigge','GER'],
+  [1981,'Karl-Heinz Rummenigge','GER'],[1982,'Paolo Rossi','ITA'],[1983,'Michel Platini','FRA'],[1984,'Michel Platini','FRA'],[1985,'Michel Platini','FRA'],[1986,'Igor Belanov','UKR'],
+  [1987,'Ruud Gullit','NED'],[1988,'Marco van Basten','NED'],[1989,'Marco van Basten','NED'],[1990,'Lothar Matthäus','GER'],[1991,'Jean-Pierre Papin','FRA'],[1992,'Marco van Basten','NED'],
+  [1993,'Roberto Baggio','ITA'],[1994,'Hristo Stoichkov','BUL'],[1995,'George Weah','LBR'],[1996,'Matthias Sammer','GER'],[1997,'Ronaldo Nazário','BRA'],[1998,'Zinedine Zidane','FRA'],
+  [1999,'Rivaldo','BRA'],[2000,'Luís Figo','POR'],[2001,'Michael Owen','ENG'],[2002,'Ronaldo Nazário','BRA'],[2003,'Pavel Nedvěd','CZE'],[2004,'Andriy Shevchenko','UKR'],[2005,'Ronaldinho','BRA'],
+  [2006,'Fabio Cannavaro','ITA'],[2007,'Kaká','BRA'],[2008,'Cristiano Ronaldo','POR'],[2009,'Lionel Messi','ARG'],[2010,'Lionel Messi','ARG'],[2011,'Lionel Messi','ARG'],[2012,'Lionel Messi','ARG'],
+  [2013,'Cristiano Ronaldo','POR'],[2014,'Cristiano Ronaldo','POR'],[2015,'Lionel Messi','ARG'],[2016,'Cristiano Ronaldo','POR'],[2017,'Cristiano Ronaldo','POR'],[2018,'Luka Modrić','CRO'],
+  [2019,'Lionel Messi','ARG'],[2021,'Lionel Messi','ARG'],[2022,'Karim Benzema','FRA'],[2023,'Lionel Messi','ARG'],[2024,'Rodri','ESP'],[2025,'Ousmane Dembélé','FRA']];
+/* para juntar en el ranking al mismo jugador aunque se escriba distinto (Messi, Leo Messi, Lionel Messi…) */
+const normName=n=>String(n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const BALLON_ALIAS={'messi':'lionel messi','leo messi':'lionel messi','cristiano':'cristiano ronaldo','cr7':'cristiano ronaldo','ronaldo':'ronaldo nazario','r9':'ronaldo nazario',
+  'zidane':'zinedine zidane','zizou':'zinedine zidane','modric':'luka modric','benzema':'karim benzema','dembele':'ousmane dembele','rodrigo hernandez':'rodri',
+  'van basten':'marco van basten','cruyff':'johan cruyff','platini':'michel platini','beckenbauer':'franz beckenbauer','di stefano':'alfredo di stefano','figo':'luis figo','nedved':'pavel nedved'};
+const bKey=n=>{const k=normName(n);return BALLON_ALIAS[k]||k;};
+/* año en que empieza tu carrera (el verano de tu primera temporada) y años de tu carrera, del más reciente al primero */
+const seasonYear=label=>parseInt(label)+1;
+const careerY0=()=>seasonYear((S.seasons[0]||S.current).label);
+const careerYears=()=>{const a=[];for(let y=seasonYear(S.current.label);y>=careerY0();y--)a.push(y);return a;};
+const INTL_W=()=>S.intl||(S.intl={cups:[],ballon:[]});
+const intlCups=()=>(S.intl&&S.intl.cups)||[];
+/* (si borras una temporada, su Balón de Oro se queda guardado y vuelve si la apuntas otra vez) */
+const intlBallon=()=>((S.intl&&S.intl.ballon)||[]).filter(b=>S.seasons.some(se=>se.label===b.season));
+/* puestos compartidos en los empates (1, 2, 3, 3, 3, 6…); a igualdad, el que lo ganó más recientemente */
+function rankRows(rows){
+  rows.forEach(r=>{r.years.sort((a,b)=>b.y-a.y);r.n=r.years.length;r.last=r.years[0].y;});
+  rows.sort((a,b)=>b.n-a.n||b.last-a.last||a.name.localeCompare(b.name,'es'));
+  rows.forEach((r,i)=>{r.rank=i&&rows[i-1].n===r.n?rows[i-1].rank:i+1;});
+  return rows;
+}
+function cupRanking(k,hist){
+  const y0=careerY0(), m={}, add=(team,y,mine)=>{(m[team]=m[team]||{team,name:teamName(team),years:[]}).years.push({y,mine});};
+  hist.forEach(([y,t])=>{if(y<y0)add(t,y,false);});
+  intlCups().filter(c=>c.comp===k).forEach(c=>add(c.team,c.year,true));
+  return rankRows(Object.values(m));
+}
+/* Balón de Oro de una temporada apuntada: el de tu club (premio individual de esa temporada) o el que apuntaste aquí */
+function seasonBallon(se){
+  const w=(se.awards||[]).find(x=>x.a==='Balón de Oro'), p=w&&byId(w.id);
+  if(p)return {club:true,p,name:p.name,nat:p.nat};
+  const b=intlBallon().find(x=>x.season===se.label);
+  return b?{club:false,name:b.name,nat:b.nat}:null;
+}
+function ballonRanking(){
+  const y0=careerY0(), m=new Map();
+  const add=(name,nat,y,mine,p)=>{const k=bKey(name);let r=m.get(k);if(!r){r={name,nat,years:[]};m.set(k,r);}r.years.push({y,mine});if(p)r.pid=p.id;if(!r.nat)r.nat=nat;};
+  BALLON_HIST.forEach(([y,n,c])=>{if(y<y0)add(n,c,y,false);});
+  S.seasons.forEach(se=>{const w=seasonBallon(se);if(w)add(w.name,w.nat,seasonYear(se.label),true,w.p);});
+  return rankRows([...m.values()]);
+}
+const yChips=(years,max=5)=>years.slice(0,max).map(y=>`<span class="rk-chip ${y.mine?'mine':''}" ${y.mine?'title="En tu carrera"':''}>${y.y}</span>`).join('')+(years.length>max?`<span class="rk-chip more">+${years.length-max}</span>`:'');
+const rkRow=(r,main,act)=>`<div class="rk-row ${r.rank===1?'top':''}"><span class="rk-pos ${r.rank<=3?'r'+r.rank:''}">${r.rank}</span>
+  <${act?'button':'div'} class="rk-main" ${act||''}>${main}<span class="rk-n"><small>×</small>${r.n}</span></${act?'button':'div'}>
+  <div class="rk-seasons">${yChips(r.years)}</div></div>`;
+const rkTxt=(name,n,max,extra='')=>`<span class="rk-txt"><b>${esc(name)}${extra}</b><span class="rk-bar"><i style="width:${n/max*100}%"></i></span></span>`;
+function renderInternacional(){
+  const pro=isPro(), tab=UI.itab, y0=careerY0();
+  const tabs=`<div class="seg" role="tablist">${[['sel','flag','Selecciones'],['bo','ball','Balón de Oro']].map(([t,i,l])=>`<button class="${tab===t?'on':''}" data-action="itab" data-t="${t}" role="tab" aria-selected="${tab===t}">${ic(i)}${l}</button>`).join('')}</div>`;
+  const head=`<div class="ph"><div><h1>Internacional</h1><p>La historia real hasta ${y0-1} y, desde ${y0}, lo que pase en tu carrera</p></div>
+    ${tab==='sel'?`<div class="ph-actions"><button class="btn primary" data-action="${pro?'cup-new':'pro-gate'}" data-k="intl">${ic(pro?'plus':'lock')}Apuntar campeón</button></div>`:''}</div>`;
+  const lock=pro?'':`<div class="intl-lock">${ic('lock')}<div><b>Con el plan Amateur puedes consultar esta sección</b><p>Para apuntar los Mundiales, Eurocopas, Copas América y Balones de Oro de tu carrera, hazte Pro.</p></div><button class="btn primary sm" data-nav="premium">${ic('crown')}Hazte Pro</button></div>`;
+  const note=`<p class="hint" style="margin-top:14px">${ic('info')}Hasta ${y0-1} cuenta la historia real. Desde ${y0}, el año en que empieza tu carrera, cuenta lo que apuntes tú: en tu modo carrera la historia es otra. En verde, lo que ha pasado en tu carrera.</p>`;
+  if(tab==='sel'){
+    const cards=CUP_COMPS.map(([k,name,shape,hist])=>{
+      const rows=cupRanking(k,hist), max=rows.length?rows[0].n:1, ed=rows.reduce((a,r)=>a+r.n,0);
+      return `<div class="aw-card intl-card"><div class="aw-head">${trophy(shape)}<div><h3>${name}</h3><span>${ed} ediciones · ${rows.length} campeones</span></div></div>
+        <div class="rk">${rows.map(r=>rkRow(r,`<span class="rk-flag">${teamFlag(r.team)}</span>${rkTxt(r.name,r.n,max)}`)).join('')}</div></div>`;
+    }).join('');
+    const mine=intlCups().slice().sort((a,b)=>b.year-a.year||compName(a.comp).localeCompare(compName(b.comp),'es'));
+    const list=`<div class="card"><div class="card-h"><h2>Campeones en tu carrera</h2>${mine.length?`<span class="sub">${mine.length}</span>`:''}</div>
+      ${mine.length?`<div class="bo-list">${mine.map(c=>`<div class="bo-row"><div class="bo-y"><b>${c.year}</b><small>${esc(compName(c.comp))}</small></div><div class="bo-who">${teamFlag(c.team)}<b>${esc(teamName(c.team))}</b></div>${pro?`<button class="icon-btn" data-action="cup-del" data-c="${c.comp}" data-y="${c.year}" aria-label="Quitar ${esc(compName(c.comp))} ${c.year}" title="Quitar">${ic('x')}</button>`:''}</div>`).join('')}</div>`
+        :`<p class="hint">Aún no has apuntado ningún campeón de tu carrera. Cuando en tu partida termine un Mundial, una Eurocopa o una Copa América, apunta quién ganó con <b>Apuntar campeón</b>.</p>`}</div>`;
+    return `${head}${lock}<div class="toolbar">${tabs}</div><div class="intl-grid">${cards}</div>${list}${note}`;
+  }
+  const rows=ballonRanking(), max=rows.length?rows[0].n:1, shown=UI.boAll?rows:rows.filter(r=>r.rank<=10);
+  const rk=`<div class="aw-card intl-card"><div class="aw-head">${awardIcon('ball')}<div><h3>Ranking del Balón de Oro</h3><span>${rows.reduce((a,r)=>a+r.n,0)} entregados · ${rows.length} jugadores</span></div></div>
+    <div class="rk">${shown.map(r=>rkRow(r,`<span class="rk-flag">${flag(r.nat)}</span>${rkTxt(r.name,r.n,max,r.pid?`<span class="bo-club" title="Jugador de tu club">${crest()}</span>`:'')}`,r.pid&&byId(r.pid)?`data-action="player" data-id="${r.pid}"`:'')).join('')}</div>
+    ${rows.length>10?`<button class="link bo-more" data-action="bo-all">${UI.boAll?'Ver solo el top 10':`Ver los ${rows.length} jugadores`} ${ic('arrowRight')}</button>`:''}</div>`;
+  const ss=S.seasons.slice().reverse();
+  const cur=`<div class="card"><div class="card-h"><h2>En tu carrera</h2><span class="sub">Ganador de cada temporada</span></div>
+    ${ss.length?`<div class="bo-list">${ss.map(se=>{
+      const w=seasonBallon(se), y=seasonYear(se.label);
+      const who=w?(w.club?`<button class="bo-who" data-action="player" data-id="${w.p.id}">${flag(w.p.nat)}<b>${esc(w.p.name)}</b><span class="tag ret-tag">Tu club</span></button>`:`<div class="bo-who">${flag(w.nat)}<b>${esc(w.name)}</b></div>`)
+        :`<div class="bo-who"><span class="none">Sin apuntar</span></div>`;
+      const act=w?(w.club||!pro?'':`<button class="icon-btn" data-action="bo-del" data-s="${se.label}" aria-label="Quitar el Balón de Oro ${y}" title="Quitar">${ic('x')}</button>`)
+        :`<button class="btn secondary sm" data-action="${pro?'bo-new':'pro-gate'}" data-k="intl" data-s="${se.label}">${ic(pro?'plus':'lock')}Apuntar</button>`;
+      return `<div class="bo-row"><div class="bo-y"><b>${y}</b><small>${se.label}</small></div>${who}${act}</div>`;}).join('')}</div>
+      <p class="hint">${ic('info')}Si lo gana alguien de tu club, se apunta como su premio individual de esa temporada: sale también en su ficha y en la vitrina.</p>`
+      :'<p class="hint">Cuando apuntes tu primera temporada, aquí podrás poner quién ganó el Balón de Oro.</p>'}</div>`;
+  return `${head}${lock}<div class="toolbar">${tabs}</div><div class="bo-wrap">${rk}${cur}</div>${note}`;
+}
+/* Apuntar la selección campeona de un torneo de tu carrera */
+const natOptions=sel=>NATS.slice().sort((a,b)=>a[2].localeCompare(b[2],'es')).map(([c,,n])=>`<option value="${c}" ${c===sel?'selected':''}>${n}</option>`).join('');
+function openCupForm(){
+  openModal(`${mHead('Apuntar campeón','Selección que ganó un torneo en tu carrera')}
+  <form class="form" data-form="cup" autocomplete="off">
+    <div class="field"><label for="cup-comp">Competición</label><select class="input" id="cup-comp" name="comp">${CUP_COMPS.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select></div>
+    <div class="field"><label for="cup-year">Año</label><select class="input" id="cup-year" name="year">${careerYears().map(y=>`<option>${y}</option>`).join('')}</select></div>
+    <div class="field full"><label for="cup-team">Selección campeona</label><div class="nat-field"><span class="nat-flag" id="cup-team-flag">${flag('ESP')}</span><select class="input" id="cup-team" name="team">${natOptions('ESP')}</select></div></div>
+  </form>
+  <p class="hint" style="margin-top:12px">${ic('info')}Si ya habías apuntado ese torneo y ese año, se cambia por este.</p>
+  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="cup-save">${ic('check')}Guardar campeón</button></div>`);
+}
+/* Apuntar el Balón de Oro de una temporada (si es de tu club, va a sus premios individuales) */
+function openBallonForm(label){
+  const se=S.seasons.find(x=>x.label===label); if(!se)return;
+  const names=[...new Set([...S.players.map(p=>p.name),...BALLON_HIST.map(b=>b[1])])].sort((a,b)=>a.localeCompare(b,'es'));
+  openModal(`${mHead(`Balón de Oro ${seasonYear(label)}`,`Temporada ${label}`)}
+  <form class="form" data-form="ballon" autocomplete="off">
+    <input type="hidden" name="season" value="${esc(label)}">
+    <div class="field full"><label for="bo-name">Jugador</label><input class="input" id="bo-name" name="name" list="bo-names" placeholder="Ej. Lamine Yamal" maxlength="40" required><datalist id="bo-names">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>
+    <div class="field full"><label for="bo-nat">Nacionalidad</label><div class="nat-field"><span class="nat-flag" id="bo-nat-flag">${flag('ESP')}</span><select class="input" id="bo-nat" name="nat">${natOptions('ESP')}</select></div></div>
+  </form>
+  <p class="hint" style="margin-top:12px">${ic('info')}Si es de tu club, escribe su nombre como lo tienes en la plantilla: se apunta como su premio individual de la ${label}.</p>
+  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="bo-save">${ic('check')}Guardar</button></div>`);
+  $('#bo-name').focus();
+}
+/* al escribir el nombre, si es de tu club o un ganador conocido, se pone su nacionalidad */
+document.addEventListener('input',e=>{
+  if(e.target.id!=='bo-name')return;
+  const k=bKey(e.target.value), p=S.players.find(x=>bKey(x.name)===k), h=BALLON_HIST.find(b=>bKey(b[1])===k), nat=p?p.nat:h?h[2]:null;
+  if(nat&&NAT[nat]){$('#bo-nat').value=nat;$('#bo-nat-flag').innerHTML=flag(nat);}
+});
 
 /* ---------- Apuntar fin de temporada ---------- */
 /* Media de la plantilla en el formulario: promedio de las medias de todos los que están
@@ -2065,13 +2279,15 @@ function renderApuntar(){
   </form>`;
 }
 
-/* Planes: Amateur (gratis) y Pro (3,99 € al mes). Sin plan anual ni pago único. */
+/* Planes: Amateur (gratis) y Pro (3,99 € al mes). Sin plan anual ni pago único.
+   Diferencias: carreras (1 / ilimitadas), temporadas (5 / ilimitadas), tema del club y apuntar en Internacional. */
 function renderPremium(){
+  const pro=isPro(), cur='<button class="btn secondary" disabled>Tu plan actual</button>';
   const plans=[
-    {name:'Amateur',desc:'Para tu primera carrera.',price:'0 €',per:'para siempre',save:'',btn:'<button class="btn secondary" disabled>Tu plan actual</button>',
-      f:[[1,'1 modo carrera'],[1,'Temporadas ilimitadas'],[1,'Plantilla, goleadores y vitrina'],[0,'Varias carreras a la vez'],[0,'Gráficas avanzadas'],[0,'Tarjetas para compartir en redes']]},
-    {name:'Pro',desc:'Para el míster que lo apunta todo.',price:'3,99 €',per:'/ mes',save:'Sin permanencia: cancela cuando quieras',pop:1,btn:'<button class="btn primary" data-action="checkout" data-plan="pro">Hazte Pro</button>',
-      f:[[1,'Carreras ilimitadas'],[1,'Gráficas y evolución avanzadas'],[1,'Tarjetas para Instagram y TikTok'],[1,'Escudo propio de tu club'],[1,'Sin anuncios']]}
+    {name:'Amateur',desc:'Para llevar tu carrera.',price:'0 €',per:'para siempre',save:'',btn:pro?'<button class="btn secondary" disabled>Incluido en Pro</button>':cur,
+      f:[[1,'1 modo carrera'],[1,`Hasta ${FREE_SEASONS} temporadas`],[1,'Tema claro y oscuro'],[1,'Internacional: consulta los rankings'],[1,'Plantilla, temporadas, historia y vitrina'],[0,'Tema con los colores de tu club'],[0,'Apuntar Mundiales, Eurocopas y Balones de Oro']]},
+    {name:'Pro',desc:'Para el míster que lo apunta todo.',price:'3,99 €',per:'/ mes',save:'Sin permanencia: cancela cuando quieras',pop:1,btn:pro?cur:'<button class="btn primary" data-action="checkout" data-plan="pro">Hazte Pro</button>',
+      f:[[1,'Modos carrera ilimitados'],[1,'Temporadas ilimitadas'],[1,'Tema con los colores de tu club, además de claro y oscuro'],[1,'Internacional completo: apunta Mundiales, Eurocopas, Copas América y Balones de Oro'],[1,'Todo lo del plan Amateur']]}
   ];
   return `
   <div class="prem-head"><span class="pill">${ic('crown')}Planes</span><h1>Lleva tu carrera <em>al siguiente nivel</em></h1><p>Empieza gratis. Mejora cuando quieras. Cancela cuando quieras.</p></div>
@@ -2082,13 +2298,14 @@ function renderPremium(){
   </div>`;
 }
 
-const PAGES={inicio:renderInicio,plantilla:renderPlantilla,temporadas:renderTemporadas,historia:renderHistoria,apuntar:renderApuntar,premium:renderPremium,config:renderConfig};
-const NAV={inicio:['home','Inicio'],plantilla:['users','Plantilla'],temporadas:['calendar','Temporadas'],historia:['book','Historia']};
+const PAGES={inicio:renderInicio,plantilla:renderPlantilla,temporadas:renderTemporadas,historia:renderHistoria,internacional:renderInternacional,apuntar:renderApuntar,premium:renderPremium,config:renderConfig};
+const NAV={inicio:['home','Inicio'],plantilla:['users','Plantilla'],temporadas:['calendar','Temporadas'],historia:['book','Historia'],internacional:['globe','Internacional']};
 
 /* ---------- Pantallas y navegación ---------- */
 function screen(which){['intro','login','app'].forEach(id=>{$('#'+id).hidden=id!==which;});window.scrollTo(0,0);}
 function go(page,keep){
   closeBajaPop();
+  if(page==='apuntar'&&UI.edit==null&&seasonsFull()){openProGate('seasons');return;} /* plan Amateur: hasta 5 temporadas */
   if(page!=='apuntar'&&CLOUD.pendingRemote){const d=CLOUD.pendingRemote;CLOUD.pendingRemote=null;applyRemote(d);}
   current=page;
   if(page!=='apuntar')UI.edit=null;
@@ -2105,6 +2322,7 @@ const avatarHTML=()=>AUTH_USER&&AUTH_USER.photoURL?`<img src="${esc(AUTH_USER.ph
 function refreshHeader(){
   $('#clubBtn').innerHTML=crest()+`<span class="cname">${esc(S.club.name)}</span>`+ic('chevron');
   $('#avatarBtn').innerHTML=avatarHTML();
+  const pp=$('.pro-pill'); pp.classList.toggle('on',isPro()); pp.setAttribute('aria-label',isPro()?'Tu plan: Pro':'Planes Pro');
 }
 
 /* ---------- Intro ---------- */
@@ -2293,41 +2511,116 @@ function openAddPlayer(inForm){
   <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button>${inForm&&!first?'':`<button class="btn secondary" data-action="submit-player-again">${ic('plus')}Añadir y otro</button>`}<button class="btn primary" data-action="submit-player">${ic('check')}${inForm?'Añadir a la temporada':'Añadir'}</button></div>`);
   $('#p-name').focus();
 }
+/* ---------- Mis carreras ----------
+   Cada carrera es un documento en users/{uid}/careers/{id} (la primera, "principal").
+   Amateur: 1 carrera. Pro: todas las que quieras; se cambia de una a otra y se pueden borrar (antes se guarda una copia). */
+let CAREERS=[];
+const tempN=n=>`${n} ${n===1?'temporada':'temporadas'}`;
+const careerInfo=c=>{
+  let st=null; try{st=JSON.parse(c.data);}catch(e){}
+  const ok=st&&st.club&&st.kit;
+  return {id:c.id,data:c.data,club:ok?st.club.name:(c.club||'Carrera'),seasons:ok?(st.seasons||[]).length:(c.seasons||0),div:ok&&st.current?st.current.div:'',
+    crest:ok?crest(crestOf(st),clubShort(st)):crest(),t:c.updatedAt&&c.updatedAt.toMillis?c.updatedAt.toMillis():0};
+};
 function openCareer(){
-  openModal(`${mHead('Mis carreras','')}
-  <div class="m-row on">${crest()}<div><b>${esc(S.club.name)}</b><span>${S.seasons.length} temporadas · ${esc(S.current.div)}</span></div><span class="live end"><i></i>Activa</span></div>
-  <button class="m-row" data-action="new-career"><span class="icon-btn" style="background:var(--gold-soft);color:var(--gold)">${ic('plus')}</span><div><b>Nueva carrera</b><span>El plan gratis incluye 1 carrera</span></div><span class="tag-pro end">PRO</span></button>`);
+  const pro=isPro();
+  const cur=`<div class="m-row on">${crest()}<div><b>${esc(S.club.name)}</b><span>${tempN(S.seasons.length)} · ${esc(S.current.div)}</span></div><span class="live end"><i></i>Activa</span></div>`;
+  const add=pro?`<button class="m-row" data-action="new-career"><span class="icon-btn" style="background:var(--green-soft);color:var(--green-d)">${ic('plus')}</span><div><b>Nueva carrera</b><span>Otro club, otra historia. Las demás se quedan guardadas</span></div></button>`
+    :`<button class="m-row" data-action="new-career"><span class="icon-btn" style="background:var(--gold-soft);color:var(--gold)">${ic('plus')}</span><div><b>Nueva carrera</b><span>El plan Amateur incluye 1 modo carrera</span></div><span class="tag-pro end">PRO</span></button>`;
+  openModal(`${mHead('Mis carreras',pro&&CLOUD.on?'Toca una carrera para abrirla':'')}${cur}<div id="carList">${CLOUD.on?'<div class="car-load"><i class="spin"></i>Buscando tus otras carreras…</div>':''}</div>${add}`);
+  if(CLOUD.on)loadCareerList();
+}
+async function loadCareerList(){
+  let list=null;
+  try{list=await window.CBDB.list(CLOUD.uid,true);}catch(e){try{list=await window.CBDB.list(CLOUD.uid,false);}catch(e2){}}
+  const box=$('#carList'); if(!box)return;
+  if(!list){box.innerHTML=`<p class="hint" style="margin-bottom:10px">${ic('info')}No se han podido cargar tus otras carreras. Revisa la conexión.</p>`;return;}
+  CAREERS=list.filter(c=>c.id!==CLOUD.cid).map(careerInfo).sort((a,b)=>b.t-a.t);
+  const pro=isPro();
+  /* con Amateur (p. ej. si dejas Pro) las demás carreras siguen guardadas, pero para abrirlas hace falta Pro */
+  box.innerHTML=CAREERS.map(c=>`<div class="car-row">
+    <button class="m-row car-open" data-action="${pro?'career-open':'pro-gate'}" data-k="careers" data-id="${c.id}">${c.crest}<div><b>${esc(c.club)}</b><span>${tempN(c.seasons)}${c.div?' · '+esc(c.div):''}</span></div>${pro?`<span class="end">${ic('arrowRight')}</span>`:'<span class="tag-pro end">PRO</span>'}</button>
+    ${pro?`<button class="icon-btn" data-action="career-del" data-id="${c.id}" aria-label="Borrar la carrera con el ${esc(c.club)}" title="Borrar carrera">${ic('trash')}</button>`:''}
+  </div>`).join('');
+}
+/* Abre otra carrera (Pro). Lo pendiente de la que dejas se manda antes; tus ajustes (tema, idioma…) se quedan como estaban */
+async function switchCareer(cid){
+  if(!CLOUD.on||cid===CLOUD.cid)return;
+  if(!isPro()){openProGate('careers');return;}
+  closeModal(); $('#cloudLoad').hidden=false;
+  try{
+    if(CLOUD.status==='pending')cloudSave();
+    let doc=null;
+    try{doc=await window.CBDB.load(CLOUD.uid,cid,true);}catch(e){try{doc=await window.CBDB.load(CLOUD.uid,cid,false);}catch(e2){}}
+    if(!doc){toast('No se ha podido abrir esa carrera. Revisa la conexión','info');return;}
+    const prevCid=CLOUD.cid, keep=clone(SET());
+    CLOUD.cid=cid;
+    if(!applyRemote(doc)){CLOUD.cid=prevCid;toast('No se ha podido leer esa carrera','info');return;}
+    setActiveCid(CLOUD.uid,cid);
+    const changed=JSON.stringify(S.settings||{})!==JSON.stringify(keep);
+    S.settings=keep; applyPrefs(); if(changed)save();
+    startWatch(CLOUD.uid);
+    Object.assign(UI,{htab:'g',scope:'all',open:null,psea:'cur',edit:null,vtab:'col',rec:0,awt:0});
+    refreshHeader(); screen('app'); go('inicio'); toast(`Carrera con el ${S.club.name}`,'check');
+  }finally{$('#cloudLoad').hidden=true;}
+}
+function openDeleteCareer(id){
+  const c=CAREERS.find(x=>x.id===id); if(!c)return;
+  openModal(`${mHead(`¿Borrar la carrera con el ${esc(c.club)}?`,'')}
+  <div class="del-warn">${ic('trash')}<div>
+    <p>Se borrará de tu cuenta esta carrera: ${tempN(c.seasons)}, sus jugadores, títulos y premios.</p>
+    <p>Antes se guarda una <b>copia de seguridad completa</b> en tu cuenta, por si acaso. La carrera que tienes abierta no se toca.</p>
+  </div></div>
+  <div class="modal-f"><button class="btn secondary" data-action="career">Cancelar</button><button class="btn danger" data-action="career-del-ok" data-id="${c.id}">${ic('trash')}Borrar carrera</button></div>`);
+}
+async function deleteCareer(id){
+  const c=CAREERS.find(x=>x.id===id); if(!c||!CLOUD.on||id===CLOUD.cid)return;
+  if(!navigator.onLine){toast('Para borrar una carrera necesitas conexión','info');return;}
+  const btn=$('[data-action="career-del-ok"]'); if(btn)btn.disabled=true;
+  /* primero la copia; si no se puede guardar, no se borra nada */
+  try{await window.CBDB.backup(CLOUD.uid,id,c.data,`Antes de borrar la carrera (${c.club})`);await window.CBDB.remove(CLOUD.uid,id);}
+  catch(e){console.error('No se pudo borrar la carrera',e);toast('No se ha podido borrar la carrera. Inténtalo otra vez','info');if(btn)btn.disabled=false;return;}
+  toast(`Carrera con el ${c.club} borrada (con copia de seguridad)`,'trash'); openCareer();
 }
 function openAccount(){
   openModal(`${mHead('Tu cuenta','')}
-  <div class="acct"><span class="avatar">${avatarHTML()}</span><div><b>${esc(S.manager)}</b><span>${AUTH_USER&&AUTH_USER.email?esc(AUTH_USER.email):'Cuenta de Google'} · Plan Amateur (gratis)</span></div></div>
-  <button class="m-row" data-nav="premium"><span class="icon-btn" style="background:var(--gold-soft);color:var(--gold)">${ic('crown')}</span><div><b>Ver planes Pro</b><span>Carreras ilimitadas y más</span></div></button>
+  <div class="acct"><span class="avatar">${avatarHTML()}</span><div><b>${esc(S.manager)}</b><span>${AUTH_USER&&AUTH_USER.email?esc(AUTH_USER.email):'Cuenta de Google'} · ${isPro()?'Plan Pro':'Plan Amateur (gratis)'}</span></div></div>
+  <button class="m-row" data-nav="premium"><span class="icon-btn" style="background:var(--gold-soft);color:var(--gold)">${ic('crown')}</span><div><b>${isPro()?'Tu plan Pro':'Ver planes Pro'}</b><span>${isPro()?'Carreras y temporadas ilimitadas':'Más carreras, temporadas ilimitadas, tema de tu club e Internacional'}</span></div></button>
   <button class="m-row" data-nav="config"><span class="icon-btn">${ic('gear')}</span><div><b>Configuración</b><span>Idioma, tu club, preferencias y tus datos</span></div></button>
   <button class="m-row" data-action="logout"><span class="icon-btn">${ic('logout')}</span><div><b>Cerrar sesión</b></div></button>`);
 }
 /* Usuario nuevo: crea su carrera (club, liga y temporada en la que empieza) y la app arranca vacía */
-function openNewCareer(){
+/* add=true (Pro): una carrera más, sin tocar las que ya tienes */
+function openNewCareer(add){
   const seasons=['2023/24','2024/25','2025/26','2026/27','2027/28','2028/29','2029/30'];
-  openModal(`${mHead('Crea tu carrera','Empiezas con la plantilla vacía: añadirás a tus jugadores al apuntar tu primera temporada.')}
+  openModal(`${mHead(add?'Nueva carrera':'Crea tu carrera',add?`Empiezas otra carrera con la plantilla vacía. La del ${esc(S.club.name)} se queda guardada en Mis carreras.`:'Empiezas con la plantilla vacía: añadirás a tus jugadores al apuntar tu primera temporada.')}
   <form class="form" data-form="career" autocomplete="off">
+    ${add?'<input type="hidden" name="mode" value="add">':''}
     <div class="field full"><label for="c-club">Nombre del club</label><input class="input" id="c-club" name="club" placeholder="Ej. Real Betis" maxlength="40" required></div>
     <div class="field"><label for="c-div">Liga</label><select class="input" id="c-div" name="div">${LEAGUES.map(([c,ls])=>`<optgroup label="${c}">${ls.map(d=>`<option>${d}</option>`).join('')}</optgroup>`).join('')}</select></div>
     <div class="field"><label for="c-season">Temporada en la que empiezas</label><select class="input" id="c-season" name="season">${seasons.map(s=>`<option ${s==='2026/27'?'selected':''}>${s}</option>`).join('')}</select></div>
   </form>
-  ${S.players.length||S.seasons.length?`<p class="hint warn-line">${ic('info')}Se sustituirá tu carrera actual (<b>${esc(S.club.name)}</b>) en este navegador.</p>`:''}
+  ${!add&&(S.players.length||S.seasons.length)?`<p class="hint warn-line">${ic('info')}Se sustituirá tu carrera actual (<b>${esc(S.club.name)}</b>) en este navegador.</p>`:''}
   <p class="hint" style="margin-top:12px">${ic('info')}La camiseta y la formación las cambias luego en Plantilla.</p>
   <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="career-create">${ic('check')}Crear carrera</button></div>`);
   $('#c-club').focus();
 }
 function createCareer(fd){
   const name=(fd.get('club')||'').trim(); if(!name){$('#c-club').focus();return;}
-  cloudBackup(`Antes de empezar de cero (carrera de ${S.club.name})`);
+  const add=fd.get('mode')==='add';
+  if(add){
+    if(!isPro()){openProGate('careers');return;}
+    if(!CLOUD.on){toast('Para crear otra carrera necesitas conexión con tu cuenta','info');return;}
+    if(CLOUD.status==='pending')cloudSave(); /* lo último de la carrera que dejas */
+    CLOUD.cid='c'+Date.now().toString(36); CLOUD.rev=0; setActiveCid(CLOUD.uid,CLOUD.cid);
+  }else cloudBackup(`Antes de empezar de cero (carrera de ${S.club.name})`);
   S={awardsV:2,trackV:1,numsV:1,owner:S.owner,manager:S.manager||'Míster',settings:S.settings,club:{name},
     kit:{pattern:'plain',c1:'#16a34a',c2:'#ffffff',trim:'#0f5132',num:'#ffffff'},gkKit:clone(DEMO.gkKit),
     current:{label:fd.get('season'),div:fd.get('div')},formation:'4-3-3',players:[],seasons:[]};
   Object.assign(UI,{htab:'g',scope:'all',open:null,psea:'cur',edit:null,vtab:'col',rec:0,awt:0});
+  if(add)startWatch(CLOUD.uid);
   save(); setKitVar(); refreshHeader(); closeModal(); screen('app'); go('inicio');
-  toast(`Carrera creada: ${name}`,'check');
+  toast(add?`Nueva carrera: ${name}. Las demás están en Mis carreras`:`Carrera creada: ${name}`,'check');
 }
 
 /* ---------- Configuración ----------
@@ -2338,17 +2631,72 @@ const LANGS=[['es','es','Español'],['en','gb','English'],['pt','pt','Português
 /* vibración del móvil al arrastrar jugadores (se puede apagar) */
 const vib=p=>{if(SET().vibrate!==false&&navigator.vibrate)navigator.vibrate(p);};
 /* "Reducir animaciones": quita movimientos y para los carruseles automáticos */
-/* Tema: 'light' (claro, por defecto), 'dark' (oscuro) o 'auto' (el mismo que el móvil u ordenador) */
-const themeOf=()=>{const t=SET().theme||'light';return t==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t;};
+/* ---------- Plan: Amateur (gratis) o Pro ----------
+   El plan lo pone el servidor en users/{uid} (campo plan: "pro"; con Stripe lo hará el webhook del pago).
+   La app solo lo lee: las reglas de Firestore no dejan que nadie se lo ponga a sí mismo.
+   Amateur: 1 carrera, hasta 5 temporadas, tema claro u oscuro e Internacional solo para consultar.
+   Pro: carreras y temporadas ilimitadas, tema con los colores de tu club y apuntar en Internacional. */
+let PLAN=(()=>{try{return localStorage.getItem('cb-plan-last')==='pro'?'pro':'free';}catch(e){return 'free';}})();
+const FREE_SEASONS=5;
+const isPro=()=>PLAN==='pro';
+const seasonsFull=()=>!isPro()&&S.seasons.length>=FREE_SEASONS;
+function setPlan(p){
+  p=p==='pro'?'pro':'free';
+  try{if(AUTH_USER)localStorage.setItem('cb-plan-'+AUTH_USER.uid,p);localStorage.setItem('cb-plan-last',p);}catch(e){}
+  if(p===PLAN)return;
+  PLAN=p; applyPrefs(); refreshHeader();
+  if(!$('#app').hidden&&current!=='apuntar')rerender();
+}
+/* Aviso cuando algo es de Pro */
+const PRO_WHY={
+  seasons:()=>['Has llegado a las 5 temporadas',`El plan Amateur incluye hasta ${FREE_SEASONS} temporadas por carrera. Las que ya tienes siguen aquí y puedes verlas y editarlas. Para apuntar la ${S.current.label} y todas las que quieras, hazte Pro.`],
+  careers:()=>['Varias carreras es de Pro','El plan Amateur incluye 1 modo carrera. Con Pro tienes todas las carreras que quieras, cada una con su club, y cambias de una a otra cuando quieras.'],
+  theme:()=>['El tema de tu club es de Pro','Con Pro, la app se pone con los colores de tu club: la barra de arriba, los botones y los detalles. El tema claro y el oscuro siguen siendo gratis.'],
+  intl:()=>['Apuntar en Internacional es de Pro','Con el plan Amateur puedes consultar los rankings. Con Pro apuntas los Mundiales, Eurocopas, Copas América y Balones de Oro de tu carrera.']
+};
+function openProGate(k){
+  const [t,txt]=(PRO_WHY[k]||PRO_WHY.careers)();
+  openModal(`${mHead(t,'')}
+  <div class="pro-gate">${ic('crown')}<div><p>${txt}</p><p class="pg-price"><b>Pro: 3,99 € al mes</b> · sin permanencia, cancelas cuando quieras</p></div></div>
+  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Ahora no</button><button class="btn primary" data-nav="premium">${ic('crown')}Ver plan Pro</button></div>`);
+}
+/* ---------- Tema "Mi club" (Pro) ----------
+   Sale de la camiseta: la cabecera con el color principal (y una franja con el secundario) y los botones,
+   enlaces y detalles con el color del club que mejor se lee sobre blanco (si hace falta, un poco más oscuro). */
+const hex2rgb=h=>{const n=parseInt(String(h||'#000000').slice(1),16)||0;return [n>>16&255,n>>8&255,n&255];};
+const rgb2hex=a=>'#'+a.map(v=>Math.round(clamp(v,0,255)).toString(16).padStart(2,'0')).join('');
+const lumOf=h=>{const c=hex2rgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);});return .2126*c[0]+.7152*c[1]+.0722*c[2];};
+const contrastOf=(a,b)=>{const x=lumOf(a),y=lumOf(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
+const mixHex=(a,b,t)=>{const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A.map((v,i)=>v+(B[i]-v)*t));};
+const satOf=h=>{const c=hex2rgb(h),mx=Math.max(...c),mn=Math.min(...c);return mx?(mx-mn)/mx:0;};
+const darkenTo=(h,min)=>{let c=h;for(let i=0;i<24&&contrastOf(c,'#ffffff')<min;i++)c=mixHex(c,'#000000',.08);return c;};
+function clubVars(k=S.kit){
+  const W='#ffffff', cs=[k.c1,k.c2,k.trim,k.num].filter(c=>/^#[0-9a-f]{6}$/i.test(c||''));
+  /* color del club: uno con color que ya se lea bien; si no, uno con color aunque haya que oscurecerlo un poco; si no, uno neutro (negro) */
+  const a=cs.find(c=>satOf(c)>.25&&contrastOf(c,W)>=3)||cs.find(c=>satOf(c)>.25&&contrastOf(c,W)>=2)||cs.find(c=>contrastOf(c,W)>=3)||cs.slice().sort((x,y)=>satOf(y)-satOf(x))[0]||'#16a34a';
+  const g=darkenTo(a,4.5), hdr=cs[0]||g, on=contrastOf(hdr,W)>=3||contrastOf(hdr,W)>=contrastOf(hdr,'#101a14')?W:'#101a14';
+  const stripe=[k.c2,k.trim,k.num].find(c=>c&&contrastOf(c,hdr)>=1.5&&contrastOf(c,W)>=1.3)||mixHex(hdr,'#000000',.3);
+  return {'--green':g,'--green-h':mixHex(g,'#000000',.14),'--green-d':darkenTo(a,6.5),'--green-soft':mixHex(a,W,.9),'--green-soft-2':mixHex(a,W,.75),
+    '--bg':mixHex(a,'#f4f6f3',.93),'--club-hdr':hdr,'--club-on':on,'--club-stripe':stripe};
+}
+const CLUB_KEYS=['--green','--green-h','--green-d','--green-soft','--green-soft-2','--bg','--club-hdr','--club-on','--club-stripe'];
+/* Tema: 'light' (claro, por defecto), 'dark' (oscuro), 'auto' (el mismo que el móvil u ordenador) o 'club' (Pro) */
+const themeOf=()=>{const t=SET().theme||'light';if(t==='club')return isPro()?'club':'light';return t==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t;};
 const applyPrefs=()=>{
-  const r=document.documentElement, t=themeOf();
+  const r=document.documentElement, t=themeOf(), club=t==='club';
   r.classList.toggle('reduce-motion',!!SET().reduceMotion);
-  r.dataset.theme=t;
-  const m=document.querySelector('meta[name="theme-color"]'); if(m)m.content=t==='dark'?'#0d1310':'#ffffff';
+  r.dataset.theme=club?'light':t;
+  CLUB_KEYS.forEach(k=>r.style.removeProperty(k));
+  let color=t==='dark'?'#0d1310':'#ffffff';
+  if(club){
+    const v=clubVars(); Object.entries(v).forEach(([k,x])=>r.style.setProperty(k,x)); r.dataset.club='1'; color=v['--club-hdr'];
+    try{localStorage.setItem('cb-club-vars',JSON.stringify(v));}catch(e){} /* para ponerlo antes de pintar la próxima vez */
+  }else delete r.dataset.club;
+  const m=document.querySelector('meta[name="theme-color"]'); if(m)m.content=color;
 };
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(SET().theme==='auto')applyPrefs();});
 function renderConfig(){
-  const st=SET(), row=(lab,desc,ctl,id)=>`<div class="set-row">${id?`<label class="txt" for="${id}">`:'<div class="txt">'}<b>${lab}</b><span>${desc}</span>${id?'</label>':'</div>'}<div class="ctl">${ctl}</div></div>`;
+  const st=SET(), row=(lab,desc,ctl,id,cls='')=>`<div class="set-row ${cls}">${id?`<label class="txt" for="${id}">`:'<div class="txt">'}<b>${lab}</b><span>${desc}</span>${id?'</label>':'</div>'}<div class="ctl">${ctl}</div></div>`;
   return `
   <button class="back" data-nav="inicio">${ic('arrowLeft')}Volver</button>
   <div class="ph"><div><h1>Configuración</h1><p>Ajustes de tu cuenta y de tu carrera.</p></div></div>
@@ -2368,7 +2716,8 @@ function renderConfig(){
     </section>
     <section class="card set-card">
       <div class="card-h"><h2>${ic('gear')}Preferencias</h2></div>
-      ${row('Tema','Claro, oscuro o el mismo que tu móvil u ordenador',`<div class="seg theme-seg" role="radiogroup" aria-label="Tema">${[['light','sun','Claro'],['dark','moon','Oscuro'],['auto','auto','Automático']].map(([k,i,l])=>`<button class="${(st.theme||'light')===k?'on':''}" data-action="set-theme" data-t="${k}" role="radio" aria-checked="${(st.theme||'light')===k}">${ic(i)}${l}</button>`).join('')}</div>`)}
+      ${(()=>{const curT=st.theme==='club'&&!isPro()?'light':(st.theme||'light');
+        return row('Tema','Claro, oscuro, el mismo que tu móvil u ordenador o con los colores de tu club',`<div class="seg theme-seg" role="radiogroup" aria-label="Tema">${[['light','sun','Claro'],['dark','moon','Oscuro'],['auto','auto','Automático'],['club','','Mi club']].map(([k,i,l])=>`<button class="${curT===k?'on':''}" data-action="set-theme" data-t="${k}" role="radio" aria-checked="${curT===k}">${k==='club'?`<span class="ts-crest">${crest()}</span>`:ic(i)}${l}${k==='club'&&!isPro()?'<span class="tag-pro">PRO</span>':''}</button>`).join('')}</div>`,null,'stack');})()}
       ${row('Vibración','En el móvil, al arrastrar jugadores para hacer cambios',`<input type="checkbox" class="switch" id="set-vib" data-set="vibrate" ${st.vibrate!==false?'checked':''}>`,'set-vib')}
       ${row('Reducir animaciones','Quita movimientos y para los carruseles automáticos',`<input type="checkbox" class="switch" id="set-anim" data-set="reduceMotion" ${st.reduceMotion?'checked':''}>`,'set-anim')}
     </section>
@@ -2501,6 +2850,7 @@ const FORMS={
     const pos=parseInt(fd.get('pos'));
     if(!pos){$('#s-pos').focus();toast('Pon la posición final en liga','info');return;}
     const ei=UI.edit, se=ei!=null?S.seasons[ei]:null;
+    if(!se&&seasonsFull()){openProGate('seasons');return;}
     /* todos los jugadores que salen en el formulario (once, banquillo, añadidos y fichajes nuevos) */
     const list=[...fd.keys()].filter(k=>k.startsWith('pj_')).map(k=>byId(k.slice(3))).filter(Boolean);
     if(!list.length){toast('Añade al menos un jugador a la temporada','info');const b=$('.xi-empty .btn');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});return;}
@@ -2543,6 +2893,29 @@ const FORMS={
     toast(`Temporada ${label} guardada`,'check');
   },
   career:createCareer,
+  /* Internacional (Pro): selección campeona de un torneo y Balón de Oro de una temporada */
+  cup(fd){
+    if(!isPro()){openProGate('intl');return;}
+    const comp=fd.get('comp'), year=parseInt(fd.get('year')), team=fd.get('team');
+    if(!CUP_COMPS.some(c=>c[0]===comp)||!year||!NAT[team])return;
+    const I=INTL_W(), had=I.cups.some(c=>c.comp===comp&&c.year===year);
+    I.cups=I.cups.filter(c=>!(c.comp===comp&&c.year===year)); I.cups.push({comp,year,team});
+    save(); closeModal(); UI.itab='sel'; rerender();
+    toast(`${compName(comp)} ${year}: ${teamName(team)}${had?' (cambiado)':''}`,'trophy');
+  },
+  ballon(fd){
+    if(!isPro()){openProGate('intl');return;}
+    const se=S.seasons.find(x=>x.label===fd.get('season')), typed=(fd.get('name')||'').trim().slice(0,40);
+    const h=BALLON_HIST.find(b=>bKey(b[1])===bKey(typed)), name=h?h[1]:typed; /* un ganador conocido, con su nombre bien escrito */
+    if(!se)return; if(!name){$('#bo-name').focus();return;}
+    const I=INTL_W(); I.ballon=I.ballon.filter(b=>b.season!==se.label);
+    /* si es de tu club y jugó esa temporada, es su premio individual de esa temporada */
+    const p=S.players.find(x=>bKey(x.name)===bKey(name)&&se.stats[x.id]);
+    if(p){se.awards=se.awards||[];if(!se.awards.some(w=>w.a==='Balón de Oro'))se.awards.push({a:'Balón de Oro',id:p.id});}
+    else I.ballon.push({season:se.label,name,nat:NAT[fd.get('nat')]?fd.get('nat'):''});
+    save(); closeModal(); rerender();
+    toast(`Balón de Oro ${seasonYear(se.label)}: ${p?p.name+' (tu club)':name}`,'ball');
+  },
   player(fd){
     const name=(fd.get('name')||'').trim(); if(!name){$('#p-name').focus();return;}
     const ovr=clamp(parseInt(fd.get('ovr'))||70,40,99);
@@ -2605,6 +2978,10 @@ async function doLogin(){
 window.onAuthUser=async u=>{
   AUTH_USER=u;
   if(u){
+    /* el plan guardado en este dispositivo vale hasta que llegue el de tu cuenta */
+    try{PLAN=localStorage.getItem('cb-plan-'+u.uid)==='pro'?'pro':'free';}catch(e){}
+    applyPrefs();
+    if(window.CBDB)watchPlan(u.uid);
     if($('#app').hidden)enterApp(u,true);else refreshHeader();
     if(window.CBDB)await cloudLogin(u);
   }else{
@@ -2623,7 +3000,17 @@ window.onAuthError=e=>toast(authMsg(e),'info');
    - las reglas solo aceptan la versión siguiente (rev+1): una versión vieja (otro móvil, una pestaña antigua)
      no puede pisar a una nueva. Si pasa, se carga la nueva y la de este dispositivo se guarda como copia;
    - si no se puede leer tu cuenta (sin conexión, error), no se escribe nada en ella. */
-const CLOUD={on:false,uid:null,rev:0,timer:null,unwatch:null,loading:null,pendingRemote:null,conflicting:false,status:''};
+const CLOUD={on:false,uid:null,cid:'principal',rev:0,timer:null,unwatch:null,unplan:null,planUid:null,loading:null,pendingRemote:null,conflicting:false,status:''};
+/* carrera abierta en este dispositivo (la última que usaste) */
+const ACTIVE_K=uid=>'cb-carrera-'+uid;
+const getActiveCid=uid=>{try{return localStorage.getItem(ACTIVE_K(uid))||'principal';}catch(e){return 'principal';}};
+const setActiveCid=(uid,cid)=>{try{localStorage.setItem(ACTIVE_K(uid),cid);}catch(e){}};
+/* el plan (Amateur o Pro) se escucha en users/{uid}: si cambia, se nota al momento */
+function watchPlan(uid){
+  if(CLOUD.planUid===uid)return;
+  CLOUD.unplan&&CLOUD.unplan(); CLOUD.planUid=uid;
+  CLOUD.unplan=window.CBDB.watchUser(uid,d=>setPlan(d&&d.plan));
+}
 const SYNC_TXT={ok:'Guardado en tu cuenta',pending:'Guardando…',saving:'Guardando…',off:'Sin conexión: está guardado en este dispositivo y se subirá solo al volver',err:'No se ha podido guardar en tu cuenta. Está guardado en este dispositivo'};
 function setSync(st){
   CLOUD.status=st; const b=$('#syncBtn'); if(!b)return;
@@ -2636,25 +3023,26 @@ function cloudQueue(){
 }
 async function cloudSave(){
   if(!CLOUD.on)return; clearTimeout(CLOUD.timer);
-  const rev=CLOUD.rev+1, data=JSON.stringify(S); CLOUD.rev=rev;
+  const uid=CLOUD.uid, cid=CLOUD.cid, rev=CLOUD.rev+1, data=JSON.stringify(S); CLOUD.rev=rev;
   setSync(navigator.onLine?'saving':'off');
   try{
-    await window.CBDB.save(CLOUD.uid,data,rev,{club:S.club.name,seasons:S.seasons.length});
+    await window.CBDB.save(uid,cid,data,rev,{club:S.club.name,seasons:S.seasons.length,div:S.current.div});
+    if(CLOUD.cid!==cid)return; /* mientras tanto has abierto otra carrera */
     if(CLOUD.rev===rev)setSync('ok');
     dailyBackup();
   }catch(e){
-    if(e&&e.code==='permission-denied')await cloudConflict(data);
-    else{setSync('err');console.error('No se pudo guardar en la nube',e);}
+    if(e&&e.code==='permission-denied')await cloudConflict(data,cid);
+    else{if(CLOUD.cid===cid)setSync('err');console.error('No se pudo guardar en la nube',e);}
   }
 }
 /* copia completa de la carrera tal y como está ahora (se llama ANTES de borrar o sustituir algo) */
 function cloudBackup(reason){
   if(!CLOUD.on||(!S.players.length&&!S.seasons.length))return false; /* una carrera vacía no necesita copia */
-  window.CBDB.backup(CLOUD.uid,JSON.stringify(S),reason).catch(e=>console.error('No se pudo guardar la copia',e));
+  window.CBDB.backup(CLOUD.uid,CLOUD.cid,JSON.stringify(S),reason).catch(e=>console.error('No se pudo guardar la copia',e));
   return true;
 }
 function dailyBackup(){
-  const k='cb-copia-'+CLOUD.uid, today=new Date().toISOString().slice(0,10);
+  const k='cb-copia-'+CLOUD.uid+(CLOUD.cid==='principal'?'':'-'+CLOUD.cid), today=new Date().toISOString().slice(0,10);
   let last=''; try{last=localStorage.getItem(k)||'';}catch(e){}
   if(last===today)return;
   if(cloudBackup('Copia diaria'))try{localStorage.setItem(k,today);}catch(e){}
@@ -2668,11 +3056,12 @@ function applyRemote(doc){
   return true;
 }
 /* otra versión más nueva llegó antes (otro dispositivo): se carga esa y la de aquí se guarda como copia */
-async function cloudConflict(localData){
+async function cloudConflict(localData,cid=CLOUD.cid){
   if(CLOUD.conflicting)return; CLOUD.conflicting=true;
   try{
-    await window.CBDB.backup(CLOUD.uid,localData,'Versión de este dispositivo (había cambios más nuevos en otro)').catch(()=>{});
-    const remote=await window.CBDB.load(CLOUD.uid,true);
+    await window.CBDB.backup(CLOUD.uid,cid,localData,'Versión de este dispositivo (había cambios más nuevos en otro)').catch(()=>{});
+    if(cid!==CLOUD.cid)return; /* ya estás en otra carrera: lo de esta queda en su copia */
+    const remote=await window.CBDB.load(CLOUD.uid,cid,true);
     if(remote&&applyRemote(remote))toast('En otro dispositivo había cambios más nuevos y se han cargado. Lo de este dispositivo se ha guardado como copia de seguridad.','info');
   }catch(e){setSync('err');console.error(e);}
   finally{CLOUD.conflicting=false;}
@@ -2689,21 +3078,29 @@ function blankCareer(u){
     kit:{pattern:'plain',c1:'#16a34a',c2:'#ffffff',trim:'#0f5132',num:'#ffffff'},gkKit:clone(DEMO.gkKit),
     current:{label:'2026/27',div:'LaLiga'},formation:'4-3-3',players:[],seasons:[]};
 }
-function startWatch(uid){CLOUD.unwatch&&CLOUD.unwatch();CLOUD.unwatch=window.CBDB.watch(uid,onRemote);}
+function startWatch(uid){CLOUD.unwatch&&CLOUD.unwatch();CLOUD.unwatch=window.CBDB.watch(uid,CLOUD.cid,onRemote);}
 async function cloudLogin(u){
   if(CLOUD.loading===u.uid||(CLOUD.on&&CLOUD.uid===u.uid))return;
   CLOUD.loading=u.uid; $('#cloudLoad').hidden=false;
+  const fail=e=>{console.error('No se pudo leer la carrera de tu cuenta',e);toast(navigator.onLine?'No se ha podido leer tu carrera de tu cuenta. Sigues trabajando en este dispositivo.':'Sin conexión: tu carrera se cargará al volver la conexión','info');};
   try{
-    let doc;
-    try{doc=await window.CBDB.load(u.uid,true);}
+    let cid=getActiveCid(u.uid), doc=null;
+    try{doc=await window.CBDB.load(u.uid,cid,true);}
     catch(e){
       /* sin servidor: se usa lo guardado en este dispositivo; si no hay nada, no se toca tu cuenta */
-      try{doc=await window.CBDB.load(u.uid,false);}
-      catch(e2){console.error('No se pudo leer la carrera de tu cuenta',e);toast(navigator.onLine?'No se ha podido leer tu carrera de tu cuenta. Sigues trabajando en este dispositivo.':'Sin conexión: tu carrera se cargará al volver la conexión','info');return;}
+      try{doc=await window.CBDB.load(u.uid,cid,false);}
+      catch(e2){fail(e);return;}
+    }
+    /* esa carrera no está (otro dispositivo, o la borraste): se abre la última que usaste de las que tengas */
+    if(!doc){
+      let all; try{all=await window.CBDB.list(u.uid,true);}catch(e){fail(e);return;}
+      const last=all.map(c=>({c,t:c.updatedAt&&c.updatedAt.toMillis?c.updatedAt.toMillis():0})).sort((a,b)=>b.t-a.t)[0];
+      if(last){cid=last.c.id;doc=last.c;}
     }
     CLOUD.uid=u.uid;
-    if(doc){CLOUD.on=true;applyRemote(doc);startWatch(u.uid);}
+    if(doc){CLOUD.cid=cid;setActiveCid(u.uid,cid);CLOUD.on=true;applyRemote(doc);startWatch(u.uid);}
     else{
+      CLOUD.cid='principal'; setActiveCid(u.uid,'principal');
       CLOUD.rev=0;
       const has=S.players.length||S.seasons.length;
       if(S.owner===u.uid&&has){CLOUD.on=true;startWatch(u.uid);await cloudSave();}          /* tu carrera de este dispositivo que aún no se había subido */
@@ -2713,7 +3110,7 @@ async function cloudLogin(u){
   }finally{CLOUD.loading=null;$('#cloudLoad').hidden=true;}
 }
 function startBlank(u){
-  CLOUD.uid=u.uid; CLOUD.rev=0; CLOUD.on=true; closeModal();
+  CLOUD.uid=u.uid; CLOUD.cid='principal'; setActiveCid(u.uid,'principal'); CLOUD.rev=0; CLOUD.on=true; closeModal();
   S=blankCareer(u); saveLocal(); setKitVar(); refreshHeader(); go('inicio'); setSync('ok'); startWatch(u.uid);
   openNewCareer();
 }
@@ -2724,14 +3121,16 @@ function askUploadLocal(){
 }
 async function uploadLocal(){
   const u=AUTH_USER; if(!u)return;
-  S.owner=u.uid; delete S.demo; CLOUD.uid=u.uid; CLOUD.rev=0; CLOUD.on=true; closeModal(); saveLocal(); startWatch(u.uid);
+  S.owner=u.uid; delete S.demo; CLOUD.uid=u.uid; CLOUD.cid='principal'; setActiveCid(u.uid,'principal'); CLOUD.rev=0; CLOUD.on=true; closeModal(); saveLocal(); startWatch(u.uid);
   await cloudSave();
   cloudBackup('Primera subida a tu cuenta');
   toast('Tu carrera está guardada en tu cuenta','cloud');
 }
 function cloudLogout(){
-  clearTimeout(CLOUD.timer); CLOUD.unwatch&&CLOUD.unwatch();
-  Object.assign(CLOUD,{on:false,uid:null,rev:0,unwatch:null,pendingRemote:null}); setSync('');
+  clearTimeout(CLOUD.timer); CLOUD.unwatch&&CLOUD.unwatch(); CLOUD.unplan&&CLOUD.unplan();
+  Object.assign(CLOUD,{on:false,uid:null,cid:'principal',rev:0,unwatch:null,unplan:null,planUid:null,pendingRemote:null}); setSync('');
+  try{localStorage.removeItem('cb-plan-last');}catch(e){}
+  if(PLAN!=='free'){PLAN='free';applyPrefs();refreshHeader();}
 }
 window.addEventListener('online',()=>{if(AUTH_USER&&window.CBDB&&!CLOUD.on)cloudLogin(AUTH_USER);else if(CLOUD.on&&CLOUD.status==='off')setSync('saving');});
 window.addEventListener('offline',()=>{if(CLOUD.on&&CLOUD.status!=='ok')setSync('off');});
@@ -2802,8 +3201,24 @@ const ACTIONS={
   'close-modal':closeModal,
   'modal-bd'(el,e){if(e.target===el)closeModal();},
   'stripe-go'(){closeModal();toast('Boceto: aquí se abriría Stripe Checkout','card');},
-  'new-career'(){closeModal();go('premium');toast('Varias carreras a la vez es parte de Pro','crown');},
-  'set-theme'(b){SET().theme=b.dataset.t;applyPrefs();save();rerender();toast(b.dataset.t==='dark'?'Tema oscuro':b.dataset.t==='auto'?'Tema automático (el de tu dispositivo)':'Tema claro',b.dataset.t==='dark'?'moon':b.dataset.t==='auto'?'auto':'sun');},
+  'new-career'(){if(!isPro())openProGate('careers');else if(!CLOUD.on)toast('Para crear otra carrera necesitas conexión con tu cuenta','info');else openNewCareer(true);},
+  'career-open'(b){switchCareer(b.dataset.id);},
+  'career-del'(b){openDeleteCareer(b.dataset.id);},
+  'career-del-ok'(b){deleteCareer(b.dataset.id);},
+  'pro-gate'(b){openProGate(b.dataset.k);},
+  'set-theme'(b){
+    const t=b.dataset.t; if(t==='club'&&!isPro()){openProGate('theme');return;}
+    SET().theme=t;applyPrefs();save();rerender();
+    toast({dark:'Tema oscuro',auto:'Tema automático (el de tu dispositivo)',club:'Tema con los colores de tu club'}[t]||'Tema claro',{dark:'moon',auto:'auto',club:'shirt'}[t]||'sun');
+  },
+  itab(b){UI.itab=b.dataset.t;rerender();},
+  'bo-all'(){UI.boAll=!UI.boAll;rerender();},
+  'cup-new'(){if(isPro())openCupForm();else openProGate('intl');},
+  'cup-save'(){const f=document.querySelector('form[data-form="cup"]');if(f)FORMS.cup(new FormData(f));},
+  'cup-del'(b){if(!isPro())return;const c=b.dataset.c,y=+b.dataset.y;INTL_W().cups=intlCups().filter(x=>!(x.comp===c&&x.year===y));save();rerender();toast(`${compName(c)} ${y} quitado`,'x');},
+  'bo-new'(b){if(isPro())openBallonForm(b.dataset.s);else openProGate('intl');},
+  'bo-save'(){const f=document.querySelector('form[data-form="ballon"]');if(f&&f.reportValidity())FORMS.ballon(new FormData(f));},
+  'bo-del'(b){if(!isPro())return;const s=b.dataset.s;INTL_W().ballon=INTL_W().ballon.filter(x=>x.season!==s);save();rerender();toast(`Balón de Oro ${seasonYear(s)} quitado`,'x');},
   'set-lang'(){toast('La app ya está en español. Los demás idiomas llegarán pronto','info');}
 };
 
@@ -2821,7 +3236,7 @@ document.addEventListener('change',e=>{
   if(e.target.matches('[data-scope]')){UI.scope=e.target.value;rerender();}
   if(e.target.matches('[data-psea]')){UI.psea=e.target.value;rerender();}
   if(e.target.matches('[data-formation]'))changeFormation(e.target.value);
-  if(e.target.id==='p-nat')$('#p-nat-flag').innerHTML=flag(e.target.value);
+  if(e.target.id==='p-nat'||e.target.id==='cup-team'||e.target.id==='bo-nat')$('#'+e.target.id+'-flag').innerHTML=flag(e.target.value);
   if(e.target.matches('[data-set]'))applySetting(e.target);
   /* al cambiar de liga en el formulario, los títulos pasan a ser los de ese país (se quitan los que ya no valen) */
   if(e.target.id==='s-div'){const box=$('#tchks'),div=e.target.value,ok=titlesFor(div);
@@ -2970,14 +3385,18 @@ if(cfg&&cfg.apiKey){
     const [{initializeApp},{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,getRedirectResult,signOut,onAuthStateChanged},fs]=
       await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
     const app=initializeApp(cfg), auth=getAuth(app);
-    /* Firestore: la carrera de cada usuario en users/{uid}/careers/principal (+ copias en .../backups) */
+    /* Firestore: cada carrera en users/{uid}/careers/{id} (la primera, "principal"; + copias en .../backups)
+       y el plan del usuario en users/{uid} (solo lectura para la app) */
     let db; try{db=fs.initializeFirestore(app,{localCache:fs.persistentLocalCache({tabManager:fs.persistentMultipleTabManager()})});}catch(e){db=fs.getFirestore(app);}
-    const ref=uid=>fs.doc(db,'users',uid,'careers','principal');
+    const ref=(uid,cid)=>fs.doc(db,'users',uid,'careers',cid||'principal');
     window.CBDB={
-      async load(uid,server){const s=server?await fs.getDocFromServer(ref(uid)):await fs.getDocFromCache(ref(uid));return s.exists()?s.data():null;},
-      save:(uid,data,rev,meta)=>fs.setDoc(ref(uid),{data,rev,...meta,app:'career-board',updatedAt:fs.serverTimestamp()}),
-      backup:(uid,data,reason)=>fs.addDoc(fs.collection(db,'users',uid,'careers','principal','backups'),{data,reason,at:fs.serverTimestamp()}),
-      watch:(uid,cb)=>fs.onSnapshot(ref(uid),snap=>cb(snap.exists()?snap.data():null,snap.metadata),e=>console.error('Escucha de la carrera',e))
+      async load(uid,cid,server){const r=ref(uid,cid),s=server?await fs.getDocFromServer(r):await fs.getDocFromCache(r);return s.exists()?s.data():null;},
+      save:(uid,cid,data,rev,meta)=>fs.setDoc(ref(uid,cid),{data,rev,...meta,app:'career-board',updatedAt:fs.serverTimestamp()}),
+      backup:(uid,cid,data,reason)=>fs.addDoc(fs.collection(db,'users',uid,'careers',cid||'principal','backups'),{data,reason,at:fs.serverTimestamp()}),
+      watch:(uid,cid,cb)=>fs.onSnapshot(ref(uid,cid),snap=>cb(snap.exists()?snap.data():null,snap.metadata),e=>console.error('Escucha de la carrera',e)),
+      async list(uid,server){const c=fs.collection(db,'users',uid,'careers'),s=server?await fs.getDocsFromServer(c):await fs.getDocsFromCache(c);return s.docs.map(d=>({id:d.id,...d.data()}));},
+      remove:(uid,cid)=>fs.deleteDoc(ref(uid,cid)),
+      watchUser:(uid,cb)=>fs.onSnapshot(fs.doc(db,'users',uid),snap=>cb(snap.exists()?snap.data():null),e=>console.error('Escucha del plan',e))
     };
     auth.languageCode='es';
     const provider=new GoogleAuthProvider();
