@@ -1296,7 +1296,7 @@ const AWARDS=[['Balón de Oro','ball'],['MVP del equipo','star'],['Jugador Revel
 const LEAGUES=[['España',['LaLiga','LaLiga Hypermotion']],['Inglaterra',['Premier League','Championship','League One','League Two']],['Italia',['Serie A','Serie B']],['Alemania',['Bundesliga','2. Bundesliga']],['Francia',['Ligue 1','Ligue 2']],['Otra',['Otra liga']]];
 /* Copas nacionales de cada país y competiciones internacionales */
 const CUPS={'España':['Copa del Rey','Supercopa de España'],'Inglaterra':['FA Cup','Carabao Cup','Community Shield'],'Italia':['Coppa Italia','Supercoppa Italiana'],'Alemania':['DFB-Pokal','Supercopa de Alemania'],'Francia':['Coupe de France','Trophée des Champions'],'Otra':['Copa nacional','Supercopa nacional']};
-const INTL=['UEFA Champions League','UEFA Europa League','UEFA Conference League','Supercopa de Europa','Mundial de Clubes'];
+const INTL=['UEFA Champions League','UEFA Europa League','UEFA Conference League','Supercopa de Europa'];
 const countryOf=div=>(LEAGUES.find(([,ls])=>ls.includes(div))||['Otra'])[0];
 /* Títulos que se pueden ganar en una liga: esa liga + las copas de su país + las internacionales */
 const titlesFor=div=>[div==='Otra liga'?'Liga':div,...CUPS[countryOf(div)],...INTL];
@@ -1306,7 +1306,7 @@ const SHAPE={'LaLiga':'league','LaLiga Hypermotion':'league','Copa del Rey':'cup
   'Bundesliga':'plate','2. Bundesliga':'plate','DFB-Pokal':'tall','Supercopa de Alemania':'cup',
   'Ligue 1':'league','Ligue 2':'league','Coupe de France':'vase','Trophée des Champions':'plate',
   'Liga':'league','Copa nacional':'cup','Supercopa nacional':'plate',
-  'UEFA Champions League':'ears','UEFA Europa League':'vase','UEFA Conference League':'tall','Supercopa de Europa':'plate','Mundial de Clubes':'plate'};
+  'UEFA Champions League':'ears','UEFA Europa League':'vase','UEFA Conference League':'tall','Supercopa de Europa':'plate'};
 function titleChips(div,checked){
   const list=[...new Set([...titlesFor(div),...checked])];
   return list.map(t=>`<label class="tchk"><input type="checkbox" name="titles" value="${esc(t)}" ${checked.includes(t)?'checked':''}><span>${trophyMini(t)}${esc(t)}</span></label>`).join('');
