@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<script>/* tema guardado (claro, oscuro, el del dispositivo o el de tu club) antes de pintar la página */
+<script>/* tema guardado (claro, oscuro o el de tu club) antes de pintar la página */
 (function(){try{var d=document.documentElement,t=((JSON.parse(localStorage.getItem('careerboard-boceto-v4'))||{}).settings||{}).theme;if(t==='auto')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
 if(t==='club'){var v=localStorage.getItem('cb-plan-last')==='pro'&&JSON.parse(localStorage.getItem('cb-club-vars')||'null');t='light';if(v){for(var k in v)d.style.setProperty(k,v[k]);d.dataset.club='1';document.querySelector('meta[name="theme-color"]').content=v['--club-hdr'];}}
 if(t)d.dataset.theme=t;}catch(e){}})();</script>
@@ -937,7 +937,7 @@ button.m-row:hover{background:var(--surface-2)}
 .theme-seg .ts-crest{display:inline-flex}
 .theme-seg .ts-crest .crest{width:14px;height:auto}
 .theme-seg .tag-pro{padding:1px 5px;font-size:9.5px;margin-left:2px}
-@media (max-width:640px){.theme-seg{display:grid;grid-template-columns:1fr 1fr;width:100%}.theme-seg button{justify-content:center}}
+@media (max-width:640px){.theme-seg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;width:100%}.theme-seg button{justify-content:center;padding:0 6px;gap:5px}}
 /* ---------- Tema "Mi club" (Pro): la cabecera con el color principal de la camiseta y los detalles con el del club ---------- */
 html[data-club] .hdr{background:var(--club-hdr);border-bottom:3px solid var(--club-stripe);-webkit-backdrop-filter:none;backdrop-filter:none}
 html[data-club] .hdr .brand .wm,html[data-club] .hdr .brand .wm span{color:var(--club-on)}
@@ -1124,7 +1124,6 @@ const I={
   users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.9.7 3.2 2.4 3.5 5.2"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
   moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
-  auto:'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5z" fill="currentColor"/>',
   cloud:'<path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 10a4.25 4.25 0 0 1-.5 8.5z"/><path d="m9.5 14 2 2 3.5-3.5"/>',
   cloudUp:'<path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 10a4.25 4.25 0 0 1-.5 8.5z"/><path d="M12 16.5v-5M9.8 13.5 12 11.3l2.2 2.2"/>',
   cloudOff:'<path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 10a4.25 4.25 0 0 1-.5 8.5z"/><path d="M4 4l16 16"/>',
@@ -1436,6 +1435,7 @@ function migrate(s){
     s.seasons.forEach(se=>{if(!se.nums){se.nums={};Object.keys(se.stats).forEach(id=>{const p=s.players.find(x=>x.id==id);if(p)se.nums[id]=p.num;});}});
     s.numsV=1;
   }
+  if(s.settings&&s.settings.theme==='auto')s.settings.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; /* ya no hay tema automático */
   return fixReturns(s);
 }
 function fixReturns(s){
@@ -2682,8 +2682,8 @@ function clubVars(k=S.kit){
     '--bg':mixHex(a,'#f4f6f3',.93),'--club-hdr':hdr,'--club-on':on,'--club-stripe':stripe};
 }
 const CLUB_KEYS=['--green','--green-h','--green-d','--green-soft','--green-soft-2','--bg','--club-hdr','--club-on','--club-stripe'];
-/* Tema: 'light' (claro, por defecto), 'dark' (oscuro), 'auto' (el mismo que el móvil u ordenador) o 'club' (Pro) */
-const themeOf=()=>{const t=SET().theme||'light';if(t==='club')return isPro()?'club':'light';return t==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t;};
+/* Tema: 'light' (claro, por defecto), 'dark' (oscuro) o 'club' (Pro: con los colores de tu club) */
+const themeOf=()=>{const t=SET().theme;if(t==='club')return isPro()?'club':'light';return t==='dark'?'dark':'light';};
 const applyPrefs=()=>{
   const r=document.documentElement, t=themeOf(), club=t==='club';
   r.classList.toggle('reduce-motion',!!SET().reduceMotion);
@@ -2696,7 +2696,6 @@ const applyPrefs=()=>{
   }else delete r.dataset.club;
   const m=document.querySelector('meta[name="theme-color"]'); if(m)m.content=color;
 };
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(SET().theme==='auto')applyPrefs();});
 function renderConfig(){
   const st=SET(), row=(lab,desc,ctl,id,cls='')=>`<div class="set-row ${cls}">${id?`<label class="txt" for="${id}">`:'<div class="txt">'}<b>${lab}</b><span>${desc}</span>${id?'</label>':'</div>'}<div class="ctl">${ctl}</div></div>`;
   return `
@@ -2718,8 +2717,8 @@ function renderConfig(){
     </section>
     <section class="card set-card">
       <div class="card-h"><h2>${ic('gear')}Preferencias</h2></div>
-      ${(()=>{const curT=st.theme==='club'&&!isPro()?'light':(st.theme||'light');
-        return row('Tema','Claro, oscuro, el mismo que tu móvil u ordenador o con los colores de tu club',`<div class="seg theme-seg" role="radiogroup" aria-label="Tema">${[['light','sun','Claro'],['dark','moon','Oscuro'],['auto','auto','Automático'],['club','','Mi club']].map(([k,i,l])=>`<button class="${curT===k?'on':''}" data-action="set-theme" data-t="${k}" role="radio" aria-checked="${curT===k}">${k==='club'?`<span class="ts-crest">${crest()}</span>`:ic(i)}${l}${k==='club'&&!isPro()?'<span class="tag-pro">PRO</span>':''}</button>`).join('')}</div>`,null,'stack');})()}
+      ${(()=>{const curT=st.theme==='club'&&isPro()?'club':st.theme==='dark'?'dark':'light';
+        return row('Tema','Claro, oscuro o con los colores de tu club',`<div class="seg theme-seg" role="radiogroup" aria-label="Tema">${[['light','sun','Claro'],['dark','moon','Oscuro'],['club','','Mi club']].map(([k,i,l])=>`<button class="${curT===k?'on':''}" data-action="set-theme" data-t="${k}" role="radio" aria-checked="${curT===k}">${k==='club'?`<span class="ts-crest">${crest()}</span>`:ic(i)}${l}${k==='club'&&!isPro()?'<span class="tag-pro">PRO</span>':''}</button>`).join('')}</div>`,null,'stack');})()}
       ${row('Vibración','En el móvil, al arrastrar jugadores para hacer cambios',`<input type="checkbox" class="switch" id="set-vib" data-set="vibrate" ${st.vibrate!==false?'checked':''}>`,'set-vib')}
       ${row('Reducir animaciones','Quita movimientos y para los carruseles automáticos',`<input type="checkbox" class="switch" id="set-anim" data-set="reduceMotion" ${st.reduceMotion?'checked':''}>`,'set-anim')}
     </section>
@@ -3211,7 +3210,7 @@ const ACTIONS={
   'set-theme'(b){
     const t=b.dataset.t; if(t==='club'&&!isPro()){openProGate('theme');return;}
     SET().theme=t;applyPrefs();save();rerender();
-    toast({dark:'Tema oscuro',auto:'Tema automático (el de tu dispositivo)',club:'Tema con los colores de tu club'}[t]||'Tema claro',{dark:'moon',auto:'auto',club:'shirt'}[t]||'sun');
+    toast({dark:'Tema oscuro',club:'Tema con los colores de tu club'}[t]||'Tema claro',{dark:'moon',club:'shirt'}[t]||'sun');
   },
   itab(b){UI.itab=b.dataset.t;rerender();},
   'bo-all'(){UI.boAll=!UI.boAll;rerender();},
