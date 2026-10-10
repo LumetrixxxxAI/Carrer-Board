@@ -1294,7 +1294,9 @@ function trophy(shape){
   return `<svg viewBox="0 0 80 80" aria-hidden="true"><g fill="none" stroke="url(#gGold)" stroke-width="4.2" stroke-linecap="round">${t.l}</g><g fill="url(#gGold)" stroke="#9a6f05" stroke-width="1.1" stroke-linejoin="round">${t.s}</g><path d="M33 14c0 8 1 13 3 17" stroke="rgba(255,255,255,.6)" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>`;
 }
 /* Premios individuales que se pueden apuntar (nombre, icono) */
-const AWARDS=[['Balón de Oro','ball'],['MVP del equipo','star'],['Jugador Revelación','bolt'],['Jugador Decepción','down']];
+/* Mejor Jugador Joven: el mejor del equipo con 21 años o menos esa temporada (cuenta la edad que tenía esa temporada) */
+const YOUNG='Mejor Jugador Joven', YOUNG_MAX=21;
+const AWARDS=[['Balón de Oro','ball'],['MVP del equipo','star'],[YOUNG,'young'],['Jugador Decepción','down']];
 /* Ligas del desplegable, agrupadas por país */
 const LEAGUES=[['España',['LaLiga','LaLiga Hypermotion']],['Inglaterra',['Premier League','Championship','League One','League Two']],['Italia',['Serie A','Serie B']],['Alemania',['Bundesliga','2. Bundesliga']],['Francia',['Ligue 1','Ligue 2']],['Otra',['Otra liga']]];
 /* Copas nacionales de cada país y competiciones internacionales */
@@ -1353,10 +1355,10 @@ const DEMO={
     {id:23,name:'Marcos Vera',pos:'MC',num:20,nat:'ESP',age:30,ovr:75,status:'Vendido'}
   ],
   seasons:[
-    {label:'2026/27',div:'LaLiga Hypermotion',pos:1,titles:['LaLiga Hypermotion'],awards:[{a:'MVP del equipo',id:18},{a:'Jugador Revelación',id:8}],stats:{1:[40,0,0,74],3:[38,3,1,72],5:[36,1,5,73],8:[30,6,8,68],10:[41,18,6,72],11:[28,5,4,66],13:[39,2,0,74],18:[40,21,5,75],19:[35,8,10,76],20:[37,7,9,71],21:[36,1,1,72],22:[34,0,3,71],23:[37,4,6,73]}},
-    {label:'2027/28',div:'LaLiga',pos:9,titles:[],awards:[{a:'MVP del equipo',id:10},{a:'Jugador Revelación',id:9},{a:'Jugador Decepción',id:18}],stats:{1:[37,0,0,77],2:[30,1,4,74],3:[36,2,0,76],5:[34,1,6,76],8:[36,9,11,77],9:[33,8,7,78],10:[37,24,5,79],11:[32,6,6,72],13:[30,1,0,76],18:[34,12,3,77],19:[25,3,6,75],20:[35,5,8,74],21:[33,0,1,74],23:[33,3,5,75]}},
-    {label:'2028/29',div:'LaLiga',pos:5,titles:['Copa del Rey'],awards:[{a:'Balón de Oro',id:10},{a:'MVP del equipo',id:10},{a:'Jugador Revelación',id:7},{a:'Jugador Decepción',id:20}],stats:{1:[44,0,0,80],2:[38,2,6,77],3:[42,3,1,80],5:[40,1,7,78],6:[41,2,5,82],7:[40,6,12,83],8:[44,12,15,83],9:[42,13,11,82],10:[45,31,7,84],11:[38,9,8,77],13:[28,1,0,77],20:[36,4,7,76],21:[30,1,0,76]}},
-    {label:'2029/30',div:'LaLiga',pos:2,titles:['UEFA Europa League','Supercopa de España'],awards:[{a:'Balón de Oro',id:10},{a:'MVP del equipo',id:9},{a:'Jugador Revelación',id:4},{a:'Jugador Decepción',id:20}],stats:{1:[50,0,0,83],2:[44,2,8,80],3:[49,4,2,84],4:[40,3,0,81],5:[42,1,7,80],6:[47,3,6,84],7:[48,8,15,85],8:[51,15,20,87],9:[49,19,14,86],10:[52,42,10,88],11:[45,11,9,82],12:[8,0,0,72],13:[22,1,0,78],14:[26,2,3,77],20:[38,5,6,78]}}
+    {label:'2026/27',div:'LaLiga Hypermotion',pos:1,titles:['LaLiga Hypermotion'],awards:[{a:'MVP del equipo',id:18},{a:'Mejor Jugador Joven',id:8}],stats:{1:[40,0,0,74],3:[38,3,1,72],5:[36,1,5,73],8:[30,6,8,68],10:[41,18,6,72],11:[28,5,4,66],13:[39,2,0,74],18:[40,21,5,75],19:[35,8,10,76],20:[37,7,9,71],21:[36,1,1,72],22:[34,0,3,71],23:[37,4,6,73]}},
+    {label:'2027/28',div:'LaLiga',pos:9,titles:[],awards:[{a:'MVP del equipo',id:10},{a:'Mejor Jugador Joven',id:8},{a:'Jugador Decepción',id:18}],stats:{1:[37,0,0,77],2:[30,1,4,74],3:[36,2,0,76],5:[34,1,6,76],8:[36,9,11,77],9:[33,8,7,78],10:[37,24,5,79],11:[32,6,6,72],13:[30,1,0,76],18:[34,12,3,77],19:[25,3,6,75],20:[35,5,8,74],21:[33,0,1,74],23:[33,3,5,75]}},
+    {label:'2028/29',div:'LaLiga',pos:5,titles:['Copa del Rey'],awards:[{a:'Balón de Oro',id:10},{a:'MVP del equipo',id:10},{a:'Mejor Jugador Joven',id:11},{a:'Jugador Decepción',id:20}],stats:{1:[44,0,0,80],2:[38,2,6,77],3:[42,3,1,80],5:[40,1,7,78],6:[41,2,5,82],7:[40,6,12,83],8:[44,12,15,83],9:[42,13,11,82],10:[45,31,7,84],11:[38,9,8,77],13:[28,1,0,77],20:[36,4,7,76],21:[30,1,0,76]}},
+    {label:'2029/30',div:'LaLiga',pos:2,titles:['UEFA Europa League','Supercopa de España'],awards:[{a:'Balón de Oro',id:10},{a:'MVP del equipo',id:9},{a:'Mejor Jugador Joven',id:14},{a:'Jugador Decepción',id:20}],stats:{1:[50,0,0,83],2:[44,2,8,80],3:[49,4,2,84],4:[40,3,0,81],5:[42,1,7,80],6:[47,3,6,84],7:[48,8,15,85],8:[51,15,20,87],9:[49,19,14,86],10:[52,42,10,88],11:[45,11,9,82],12:[8,0,0,72],13:[22,1,0,78],14:[26,2,3,77],20:[38,5,6,78]}}
   ]
 };
 /* Relleno de ejemplo para la temporada en curso (solo demo) */
@@ -1407,7 +1409,9 @@ function migrate(s){
     /* premios individuales (nuevos): si la temporada es de la demo y aún no los tiene, se copian los de ejemplo */
     if(!se.awards){const d=DEMO.seasons.find(x=>x.label===se.label);se.awards=d&&d.awards?clone(d.awards).filter(w=>s.players.some(p=>p.id===w.id)):[];}
   });
-  /* v2 de premios: solo Balón de Oro, MVP del equipo, Jugador Revelación y Jugador Decepción.
+  /* el antiguo "Jugador Revelación" ahora es el "Mejor Jugador Joven" (se conservan los que ya estaban apuntados) */
+  s.seasons.forEach(se=>(se.awards||[]).forEach(w=>{if(w.a==='Jugador Revelación')w.a=YOUNG;}));
+  /* v2 de premios: solo Balón de Oro, MVP del equipo, Jugador Revelación (hoy Mejor Jugador Joven) y Jugador Decepción.
      Se quitan los premios antiguos y, en las temporadas de la demo, se añaden los nuevos de ejemplo. */
   if(s.awardsV!==2){
     const ok=AWARDS.map(([k])=>k);
@@ -1685,7 +1689,7 @@ function awardsTile(){
   </button>`;
 }
 /* Escena cuando aún no hay premios: un podio con el Balón de Oro en lo alto y, en los escalones de los lados,
-   los huecos del MVP y del Jugador Revelación esperando dueño. Rayos de luz girando, destellos y confeti. */
+   los huecos del MVP y del Mejor Jugador Joven esperando dueño. Rayos de luz girando, destellos y confeti. */
 function awardsEmptyScene(){
   const cx=182, cy=40, R=175, d=4.5*Math.PI/180;
   const pt=t=>`${(cx+R*Math.cos(t)).toFixed(1)},${(cy+R*Math.sin(t)).toFixed(1)}`;
@@ -1713,9 +1717,9 @@ function awardsEmptyScene(){
     <g font-family="Barlow Condensed,sans-serif" font-weight="800" text-anchor="middle" fill="#c8961e">
       <text x="142" y="122" font-size="17" opacity=".55">2</text><text x="222" y="128" font-size="17" opacity=".55">3</text><text x="182" y="108" font-size="26">1</text>
     </g>
-    <!-- huecos del MVP y del Jugador Revelación, esperando -->
+    <!-- huecos del MVP y del Mejor Jugador Joven, esperando -->
     <g class="awt-ghost" transform="translate(125.2 59.8) scale(.42)">${AWARD_SVG.star}</g>
-    <g class="awt-ghost" transform="translate(205 70) scale(.4)">${AWARD_SVG.bolt}</g>
+    <g class="awt-ghost" transform="translate(205 70) scale(.4)">${AWARD_SVG.young}</g>
     <!-- Balón de Oro -->
     <ellipse cx="${cx}" cy="69" rx="17" ry="2.6" fill="#9a6f05" opacity=".25"/>
     <g class="awt-ball"><g transform="translate(148 7.5) scale(.85)">${AWARD_SVG.ball}</g></g>
@@ -1834,6 +1838,7 @@ function renderTemporadas(){
 
 /* ---------- Premios individuales ---------- */
 const AWARD_SVG={
+  young:'<circle cx="40" cy="30" r="21" fill="url(#gGold)" stroke="#9a6f05" stroke-width="1.2"/><circle cx="40" cy="30" r="15.5" fill="none" stroke="#9a6f05" stroke-width="1.1" opacity=".45"/><g stroke="#8a6304" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M40 43V27" fill="none"/><path d="M40 34c-8 .4-12-4-12-10.6 7.2-.3 12 3.7 12 10.6z" fill="rgba(154,111,5,.38)"/><path d="M40 29c.2-7.4 4.8-11.6 12-11.4 0 7-4.4 11.2-12 11.4z" fill="rgba(154,111,5,.38)"/></g><path d="M29 17c-3.5 3-5.5 7-5.8 11" stroke="rgba(255,255,255,.75)" stroke-width="2.6" stroke-linecap="round" fill="none"/><g fill="url(#gGold)" stroke="#9a6f05" stroke-width="1.1" stroke-linejoin="round"><path d="M35 51h10v7H35z"/><path d="M29 58h22l2.5 5h-27z"/><rect x="24" y="63" width="32" height="9" rx="2"/></g>',
   ball:'<circle cx="40" cy="31" r="21" fill="url(#gGold)" stroke="#9a6f05" stroke-width="1.2"/><g fill="none" stroke="#9a6f05" stroke-width="1.5" stroke-linejoin="round" opacity=".7"><path d="M40 23l8 5.8-3 9.4H35l-3-9.4z"/><path d="M40 23V11M48 28.8l10.5-3.4M45 38.2l6.4 8.8M35 38.2l-6.4 8.8M32 28.8l-10.5-3.4"/></g><path d="M29 18c-3.5 3-5.5 7-5.8 11" stroke="rgba(255,255,255,.75)" stroke-width="2.6" stroke-linecap="round" fill="none"/><g fill="url(#gGold)" stroke="#9a6f05" stroke-width="1.1" stroke-linejoin="round"><path d="M35 52h10v6H35z"/><path d="M29 58h22l2.5 5h-27z"/><rect x="24" y="63" width="32" height="9" rx="2"/></g>',
   star:'<g fill="url(#gGold)" stroke="#9a6f05" stroke-width="1.2" stroke-linejoin="round"><path d="M40 7l7.6 15.4 17 2.5-12.3 12 2.9 16.9L40 45.8 24.8 53.8l2.9-16.9-12.3-12 17-2.5z"/><path d="M36 49h8v9h-8z"/><path d="M29 58h22l2.5 5h-27z"/><rect x="24" y="63" width="32" height="9" rx="2"/></g><path d="M36 19l-3 7" stroke="rgba(255,255,255,.75)" stroke-width="2.4" stroke-linecap="round"/>',
   boot:'<g fill="url(#gGold)" stroke="#9a6f05" stroke-width="1.2" stroke-linejoin="round"><path d="M12 50c0-5 3-9 7-12l4-18c.5-2 2-3 4-3h12c2 0 3.5 1.5 3.5 3.5V30c9 2 17 5 23 9 3 2 4.5 5 4.5 8v4c0 2-1.5 3-3 3H15c-1.7 0-3-1.3-3-3z"/><path d="M18 54h6v6h-6zM31 54h6v6h-6zM49 54h6v6h-6zM61 54h5v5h-5z"/></g><g stroke="#9a6f05" stroke-width="1.6" stroke-linecap="round" opacity=".7"><path d="M41 32l-6 3M45 33.5l-6 3.2M49 35l-6 3.3"/></g><path d="M26 21l-3 14" stroke="rgba(255,255,255,.75)" stroke-width="2.4" stroke-linecap="round"/><g fill="url(#gGold)" stroke="#9a6f05" stroke-width="1.1"><rect x="16" y="63" width="48" height="9" rx="2"/></g>',
@@ -2053,11 +2058,22 @@ function formAvg(){
 let FORM_F='4-3-3', FORM_SLOTS=null, FORM_AW_PLAYERS=[], FORM_EXTRA=[], FORM_BAJAS={}; /* FORM_BAJAS[id] = motivo; se aplica al guardar */
 let FORM_LOANS=new Set(); /* cedidos de la temporada que se está apuntando */
 let FORM_RETURNS=new Set(); /* jugadores que se fueron en una temporada anterior y vuelven al club en esta */
+/* Edad de un jugador en la temporada del formulario (al apuntar la que está en juego, la de ahora) */
+const formAgeOf=id=>{const p=byId(id), se=formSeason();return p?(se?ageIn(se,p):p.age):99;};
+/* Jugadores que se pueden elegir para un premio. Para el Mejor Jugador Joven, solo los de 21 años o menos
+   (si ya había uno apuntado de más edad, se deja, con su edad a la vista, para no cambiarlo sin querer) */
+function awOptions(a,sel,keep=true){
+  const young=a===YOUNG, list=FORM_AW_PLAYERS.filter(p=>!young||formAgeOf(p.id)<=YOUNG_MAX||(keep&&p.id===sel));
+  if(!list.length)return `<option value="">Nadie con ${YOUNG_MAX} años o menos</option>`;
+  return list.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)} · ${p.pos}${young?` · ${formAgeOf(p.id)} años`:''}</option>`).join('');
+}
+function refreshAwOptions(){document.querySelectorAll('#seasonForm .aw-row').forEach(r=>{const ps=r.querySelector('[name="aw_p"]');ps.innerHTML=awOptions(r.querySelector('[name="aw_a"]').value,+ps.value);});}
 /* Fila de premio individual en el formulario: premio + jugador */
 function awardRow(w={}){
+  const a=w.a||AWARDS[0][0];
   return `<div class="aw-row">
-    <select class="input" name="aw_a" aria-label="Premio">${AWARDS.map(([k])=>`<option ${w.a===k?'selected':''}>${k}</option>`).join('')}</select>
-    <select class="input" name="aw_p" aria-label="Jugador">${FORM_AW_PLAYERS.map(p=>`<option value="${p.id}" ${w.id===p.id?'selected':''}>${esc(p.name)} · ${p.pos}</option>`).join('')}</select>
+    <select class="input" name="aw_a" aria-label="Premio">${AWARDS.map(([k])=>`<option ${a===k?'selected':''}>${k}</option>`).join('')}</select>
+    <select class="input" name="aw_p" aria-label="Jugador">${awOptions(a,w.id)}</select>
     <button type="button" class="icon-btn" data-action="aw-row-del" aria-label="Quitar premio">${ic('x')}</button>
   </div>`;
 }
@@ -2124,7 +2140,7 @@ function addFormRow(p,quiet){
   FORM_EXTRA=FORM_EXTRA.filter(id=>id!=p.id); renderExtras();
   if(!FORM_AW_PLAYERS.some(x=>x.id==p.id)){
     FORM_AW_PLAYERS.push(p);
-    f.querySelectorAll('select[name="aw_p"]').forEach(s=>s.insertAdjacentHTML('beforeend',`<option value="${p.id}">${esc(p.name)} · ${p.pos}</option>`));
+    refreshAwOptions();
   }
   updateFormCounts(); formAvg(); refreshSlotTags();
   const r=f.querySelector(`.prow[data-id="${p.id}"]`);
@@ -2194,7 +2210,7 @@ function formRemoveRow(id,status){
   FORM_LOANS.delete(id); FORM_RETURNS.delete(id);
   if(del){ /* creado por error: se borra del todo */
     S.players=S.players.filter(p=>p.id!==id); FORM_AW_PLAYERS=FORM_AW_PLAYERS.filter(p=>p.id!==id);
-    f.querySelectorAll(`select[name="aw_p"] option[value="${id}"]`).forEach(o=>o.remove());
+    refreshAwOptions();
     save();
   }else{FORM_BAJAS[id]=status; FORM_EXTRA.push(id); renderExtras();}
   updateFormCounts(); formAvg(); refreshSlotTags(); toast(msg,del?'trash':'x');
@@ -2278,7 +2294,7 @@ function renderApuntar(){
       <div class="card-h"><h2>4. Premios individuales</h2><span class="sub">Opcional</span></div>
       <div id="awRows">${(se&&se.awards||[]).map(w=>awardRow(w)).join('')}</div>
       <button type="button" class="btn secondary sm" data-action="aw-row-add">${ic('plus')}Añadir premio</button>
-      <p class="hint">${ic('info')}Balón de Oro, MVP del equipo, Jugador Revelación y Jugador Decepción de esa temporada.</p>
+      <p class="hint">${ic('info')}Balón de Oro, MVP del equipo, Mejor Jugador Joven (el mejor con ${YOUNG_MAX} años o menos esa temporada) y Jugador Decepción.</p>
     </div>
     <div class="savebar"><p>${se?`Estás editando la temporada <b>${label}</b>`:`Se guardará como temporada <b>${label}</b>${prev?` · la anterior fue ${prev.label}`:''}`}</p>${se?`<button type="button" class="btn danger-soft" data-action="season-del" aria-label="Borrar temporada ${label}">${ic('trash')}<span>Borrar<span class="hide-sm"> temporada</span></span></button>`:''}<button type="button" class="btn secondary" data-nav="${back}">Cancelar</button><button type="submit" class="btn primary">${ic('check')}${se?'Guardar cambios':'Guardar temporada'}</button></div>
   </form>`;
@@ -3259,6 +3275,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='p-nat'||e.target.id==='cup-team'||e.target.id==='bo-nat')$('#'+e.target.id+'-flag').innerHTML=flag(e.target.value);
   if(e.target.matches('[data-set]'))applySetting(e.target);
   /* al cambiar de liga en el formulario, los títulos pasan a ser los de ese país (se quitan los que ya no valen) */
+  if(e.target.matches('#seasonForm [name="aw_a"]')){const ps=e.target.closest('.aw-row').querySelector('[name="aw_p"]');ps.innerHTML=awOptions(e.target.value,+ps.value,false);}
   if(e.target.id==='s-div'){const box=$('#tchks'),div=e.target.value,ok=titlesFor(div);
     const keep=[...box.querySelectorAll('input:checked')].map(c=>c.value).filter(t=>ok.includes(t));
     box.innerHTML=titleChips(div,keep);}
