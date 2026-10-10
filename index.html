@@ -319,6 +319,8 @@ h1,h2,h3,p{margin:0}
 .awt-empty{min-height:124px;border-color:var(--gold-line);background:linear-gradient(165deg,#fffdf6 0%,#fdf2d6 100%);transition:box-shadow .2s,border-color .2s}
 .awt-empty:hover{border-color:#e3c477;box-shadow:0 10px 26px -14px rgba(154,111,5,.55)}
 .awt-scene{position:absolute;inset:0;width:100%;height:100%}
+/* el dibujo y el velo se recortan con las esquinas redondeadas de la tarjeta (con la animación, Chrome no siempre los recorta) */
+.awt-scene,.awt-empty::after{border-radius:calc(var(--radius) - 1px);clip-path:inset(0 round calc(var(--radius) - 1px))}
 .awt-empty::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,253,246,.96) 0%,rgba(255,253,246,.82) 34%,rgba(255,253,246,0) 58%);pointer-events:none}
 .awt-copy{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;max-width:56%}
 .awt-copy b{margin-top:auto;padding-top:14px;font:700 22px/1.05 var(--font-d);color:var(--text)}
