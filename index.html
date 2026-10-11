@@ -1936,6 +1936,27 @@ const BALLON_ALIAS={'messi':'lionel messi','leo messi':'lionel messi','cristiano
   'zidane':'zinedine zidane','zizou':'zinedine zidane','modric':'luka modric','benzema':'karim benzema','dembele':'ousmane dembele','rodrigo hernandez':'rodri',
   'van basten':'marco van basten','cruyff':'johan cruyff','platini':'michel platini','beckenbauer':'franz beckenbauer','di stefano':'alfredo di stefano','figo':'luis figo','nedved':'pavel nedved'};
 const bKey=n=>{const k=normName(n);return BALLON_ALIAS[k]||k;};
+/* Candidatos al Balón de Oro que se sugieren al apuntarlo: [jugador, nacionalidad, año de nacimiento, último año en activo si ya se retiró].
+   Solo salen los que estaban en activo esa temporada (de los 17 años hasta su retirada; los que siguen jugando, hasta los 40). */
+const STARS=[['Lionel Messi','ARG',1987],['Cristiano Ronaldo','POR',1985],['Neymar','BRA',1992],['Kylian Mbappé','FRA',1998],['Erling Haaland','NOR',2000],
+  ['Mohamed Salah','EGY',1992],['Robert Lewandowski','POL',1988],['Kevin De Bruyne','BEL',1991],['Luka Modrić','CRO',1985],['Karim Benzema','FRA',1987],
+  ['Harry Kane','ENG',1993],['Antoine Griezmann','FRA',1991],['Virgil van Dijk','NED',1991],['Sadio Mané','SEN',1992],['Vinícius Júnior','BRA',2000],
+  ['Jude Bellingham','ENG',2003],['Rodri','ESP',1996],['Lamine Yamal','ESP',2007],['Pedri','ESP',2002],['Raphinha','BRA',1996],['Ousmane Dembélé','FRA',1997],
+  ['Achraf Hakimi','MAR',1998],['Vitinha','POR',2000],['Florian Wirtz','GER',2003],['Jamal Musiala','GER',2003],['Bukayo Saka','ENG',2001],['Phil Foden','ENG',2000],
+  ['Lautaro Martínez','ARG',1997],['Federico Valverde','URU',1998],['Khvicha Kvaratskhelia','GEO',2001],['Victor Osimhen','NGA',1998],['Bernardo Silva','POR',1994],
+  ['Bruno Fernandes','POR',1994],['Son Heung-min','KOR',1992],['Thibaut Courtois','BEL',1992],['Alisson Becker','BRA',1992],['Gianluigi Donnarumma','ITA',1999],
+  ['Jan Oblak','SVN',1993],['Manuel Neuer','GER',1986],['Joshua Kimmich','GER',1995],['Sergio Ramos','ESP',1986],['Luis Suárez','URU',1987],['Paulo Dybala','ARG',1993],
+  ['Ángel Di María','ARG',1988],['Romelu Lukaku','BEL',1993],["N'Golo Kanté",'FRA',1991],['Paul Pogba','FRA',1993],['Martin Ødegaard','NOR',1998],
+  ['Julián Álvarez','ARG',2000],['Cole Palmer','ENG',2002],['Declan Rice','ENG',1999],['Nico Williams','ESP',2002],['Desiré Doué','FRA',2005],['João Neves','POR',2004],
+  ['Nuno Mendes','POR',2002],['Michael Olise','FRA',2001],['Pau Cubarsí','ESP',2007],['Arda Güler','TUR',2005],['Endrick','BRA',2006],['Alexander Isak','SWE',1999],
+  ['Viktor Gyökeres','SWE',1998],['Frenkie de Jong','NED',1997],['Rúben Dias','POR',1997],['Thomas Müller','GER',1989],['Riyad Mahrez','ALG',1991],
+  ['Philippe Coutinho','BRA',1992],['Edinson Cavani','URU',1987],['Keylor Navas','CRC',1986],
+  ['Toni Kroos','GER',1990,2024],['Eden Hazard','BEL',1991,2023],['Sergio Agüero','ARG',1988,2021],['Gareth Bale','WAL',1989,2023],['Gianluigi Buffon','ITA',1978,2023],
+  ['Andrés Iniesta','ESP',1984,2024],['Zlatan Ibrahimović','SWE',1981,2023],['Gerard Piqué','ESP',1987,2022],['Mesut Özil','GER',1988,2023],['Marcelo','BRA',1988,2025],
+  ['David Silva','ESP',1986,2023],['Arjen Robben','NED',1984,2021],['Franck Ribéry','FRA',1983,2022],['Wayne Rooney','ENG',1985,2021],['Fernando Torres','ESP',1984,2019],
+  ['Xavi Hernández','ESP',1980,2019]];
+/* y = año del Balón de Oro (el final de la temporada) */
+const starActive=(st,y)=>y-st[2]>=17&&(st[3]?y<=st[3]:y<=Math.max(2027,st[2]+40));
 /* año en que empieza tu carrera (el verano de tu primera temporada) y años de tu carrera, del más reciente al primero */
 const seasonYear=label=>parseInt(label)+1;
 const careerY0=()=>seasonYear((S.seasons[0]||S.current).label);
@@ -2027,7 +2048,14 @@ function openCupForm(){
 /* Apuntar el Balón de Oro de una temporada (si es de tu club, va a sus premios individuales) */
 function openBallonForm(label){
   const se=S.seasons.find(x=>x.label===label); if(!se)return;
-  const names=[...new Set([...S.players.map(p=>p.name),...BALLON_HIST.map(b=>b[1])])].sort((a,b)=>a.localeCompare(b,'es'));
+  /* solo jugadores en activo esa temporada: los de tu club que no se habían retirado, las estrellas que seguían jugando
+     y los que ya apuntaste antes (los retirados no salen, para que la lista no sea enorme) */
+  const y=seasonYear(label);
+  const names=[...new Set([
+    ...S.players.filter(p=>!(p.status==='Retirado'&&p.leftIn&&p.leftIn<label)).map(p=>p.name),
+    ...STARS.filter(st=>starActive(st,y)).map(st=>st[0]),
+    ...((S.intl&&S.intl.ballon)||[]).map(b=>b.name)
+  ])].sort((a,b)=>a.localeCompare(b,'es'));
   openModal(`${mHead(`Balón de Oro ${seasonYear(label)}`,`Temporada ${label}`)}
   <form class="form" data-form="ballon" autocomplete="off">
     <input type="hidden" name="season" value="${esc(label)}">
@@ -2041,7 +2069,7 @@ function openBallonForm(label){
 /* al escribir el nombre, si es de tu club o un ganador conocido, se pone su nacionalidad */
 document.addEventListener('input',e=>{
   if(e.target.id!=='bo-name')return;
-  const k=bKey(e.target.value), p=S.players.find(x=>bKey(x.name)===k), h=BALLON_HIST.find(b=>bKey(b[1])===k), nat=p?p.nat:h?h[2]:null;
+  const k=bKey(e.target.value), p=S.players.find(x=>bKey(x.name)===k), st=STARS.find(x=>bKey(x[0])===k), h=BALLON_HIST.find(b=>bKey(b[1])===k), nat=p?p.nat:st?st[1]:h?h[2]:null;
   if(nat&&NAT[nat]){$('#bo-nat').value=nat;$('#bo-nat-flag').innerHTML=flag(nat);}
 });
 
@@ -2939,7 +2967,8 @@ const FORMS={
   ballon(fd){
     if(!isPro()){openProGate('intl');return;}
     const se=S.seasons.find(x=>x.label===fd.get('season')), typed=(fd.get('name')||'').trim().slice(0,40);
-    const h=BALLON_HIST.find(b=>bKey(b[1])===bKey(typed)), name=h?h[1]:typed; /* un ganador conocido, con su nombre bien escrito */
+    /* un jugador conocido, con su nombre bien escrito */
+    const name=(BALLON_HIST.find(b=>bKey(b[1])===bKey(typed))||[])[1]||(STARS.find(x=>bKey(x[0])===bKey(typed))||[])[0]||typed;
     if(!se)return; if(!name){$('#bo-name').focus();return;}
     const I=INTL_W(); I.ballon=I.ballon.filter(b=>b.season!==se.label);
     /* si es de tu club y jugó esa temporada, es su premio individual de esa temporada */
