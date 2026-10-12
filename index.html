@@ -941,7 +941,7 @@ html.cb-in #intro{display:none}
 .theme-seg .ts-crest .crest{width:14px;height:auto}
 .theme-seg .tag-pro{padding:1px 5px;font-size:9.5px;margin-left:2px}
 @media (max-width:640px){.theme-seg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;width:100%}.theme-seg button{justify-content:center;padding:0 6px;gap:5px}}
-/* ---------- Tema "Mi club" (Pro): la cabecera con el color principal de la camiseta y los detalles con el del club ---------- */
+/* ---------- Tema "Mi club" (Pro): la cabecera con el color principal del escudo y los detalles con los del club ---------- */
 html[data-club] .hdr{background:var(--club-hdr);border-bottom:3px solid var(--club-stripe);-webkit-backdrop-filter:none;backdrop-filter:none}
 html[data-club] .hdr .brand .wm,html[data-club] .hdr .brand .wm span{color:var(--club-on)}
 html[data-club] .hdr .tab{color:var(--club-on);opacity:.75}
@@ -1506,7 +1506,7 @@ const flag=c=>NAT[c]?`<span class="flag fi fi-${NAT[c].i}" role="img" aria-label
 const tags=p=>`${p.cantera?'<span class="tag cantera">Cantera</span>':''}${p.status?`<span class="tag muted">${esc(p.status)}</span>`:''}`;
 const miniShirt=p=>`<span class="mini-shirt">${shirt({num:p.num,gk:p.pos==='POR'})}</span>`;
 const nextLabel=l=>{const y=parseInt(l.slice(0,4))+1;return `${y}/${String(y+1).slice(2)}`;};
-const setKitVar=()=>{document.documentElement.style.setProperty('--kit1',S.kit.c1);applyPrefs();}; /* (el tema "Mi club" sale de la camiseta) */
+const setKitVar=()=>{document.documentElement.style.setProperty('--kit1',S.kit.c1);applyPrefs();}; /* (el tema "Mi club" sale del escudo, que sin editar sigue a la camiseta) */
 
 /* ---------- Cálculos a partir de las temporadas ---------- */
 const byId=id=>S.players.find(p=>p.id==id);
@@ -2755,7 +2755,8 @@ function openProGate(k){
   <div class="modal-f"><button class="btn secondary" data-action="close-modal">Ahora no</button><button class="btn primary" data-nav="premium">${ic('crown')}Ver plan Pro</button></div>`);
 }
 /* ---------- Tema "Mi club" (Pro) ----------
-   Sale de la camiseta: la cabecera con el color principal (y una franja con el secundario) y los botones,
+   Sale del escudo (Configuración › Escudo; si no lo has editado, lleva los colores de la camiseta): la cabecera con su
+   color principal (y una franja con el secundario) y los botones,
    enlaces y detalles con el color del club que mejor se lee sobre blanco (si hace falta, un poco más oscuro). */
 const hex2rgb=h=>{const n=parseInt(String(h||'#000000').slice(1),16)||0;return [n>>16&255,n>>8&255,n&255];};
 const rgb2hex=a=>'#'+a.map(v=>Math.round(clamp(v,0,255)).toString(16).padStart(2,'0')).join('');
@@ -2764,7 +2765,8 @@ const contrastOf=(a,b)=>{const x=lumOf(a),y=lumOf(b);return (Math.max(x,y)+.05)/
 const mixHex=(a,b,t)=>{const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A.map((v,i)=>v+(B[i]-v)*t));};
 const satOf=h=>{const c=hex2rgb(h),mx=Math.max(...c),mn=Math.min(...c);return mx?(mx-mn)/mx:0;};
 const darkenTo=(h,min)=>{let c=h;for(let i=0;i<24&&contrastOf(c,'#ffffff')<min;i++)c=mixHex(c,'#000000',.08);return c;};
-function clubVars(k=S.kit){
+function clubVars(c=crestOf()){
+  const k={c1:c.c1,c2:c.c2,trim:c.trim,num:c.accent||c.num}; /* principal, secundario, borde y símbolo */
   const W='#ffffff', cs=[k.c1,k.c2,k.trim,k.num].filter(c=>/^#[0-9a-f]{6}$/i.test(c||''));
   /* color del club: uno con color que ya se lea bien; si no, uno con color aunque haya que oscurecerlo un poco; si no, uno neutro (negro) */
   const a=cs.find(c=>satOf(c)>.25&&contrastOf(c,W)>=3)||cs.find(c=>satOf(c)>.25&&contrastOf(c,W)>=2)||cs.find(c=>contrastOf(c,W)>=3)||cs.slice().sort((x,y)=>satOf(y)-satOf(x))[0]||'#16a34a';
@@ -3295,7 +3297,7 @@ const ACTIONS={
   'crest-save'(){
     const {short,...c}=cdraft, s=(short||'').trim().toUpperCase().slice(0,3);
     S.crest=c; if(s)S.club.short=s; else delete S.club.short;
-    save();closeModal();refreshHeader();rerender();toast('Escudo guardado','shield');
+    save();closeModal();applyPrefs();refreshHeader();rerender();toast('Escudo guardado','shield'); /* el tema "Mi club" cambia con el escudo */
   },
   checkout(){openCheckout();},
   'close-modal':closeModal,
