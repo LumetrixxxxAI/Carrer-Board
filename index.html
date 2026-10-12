@@ -974,6 +974,10 @@ html[data-club] .tok-r.r-hi{color:#0f6d32}
 .bo-wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:900px){.bo-wrap{grid-template-columns:minmax(0,1fr)}}
 .bo-more{margin-top:12px}
+.intl-mine{margin-bottom:16px}
+.bo-list.cup-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:8px;margin-bottom:6px}
+.bo-who .none{white-space:nowrap}
+.cup-list .bo-y{min-width:92px}
 .bo-list{display:flex;flex-direction:column;gap:8px}
 .bo-row{display:flex;align-items:center;gap:12px;min-height:54px;padding:8px 10px 8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
 .bo-y{display:flex;flex-direction:column;min-width:58px;line-height:1.15}
@@ -2014,11 +2018,19 @@ function renderInternacional(){
       return `<div class="aw-card intl-card"><div class="aw-head">${trophy(shape)}<div><h3>${name}</h3><span>${ed} ediciones · ${rows.length} campeones</span></div></div>
         <div class="rk">${rows.map(r=>rkRow(r,`<span class="rk-flag">${teamFlag(r.team)}</span>${rkTxt(r.name,r.n,max)}`)).join('')}</div></div>`;
     }).join('');
-    const mine=intlCups().slice().sort((a,b)=>b.year-a.year||compName(a.comp).localeCompare(compName(b.comp),'es'));
-    const list=`<div class="card"><div class="card-h"><h2>Campeones en tu carrera</h2>${mine.length?`<span class="sub">${mine.length}</span>`:''}</div>
-      ${mine.length?`<div class="bo-list">${mine.map(c=>`<div class="bo-row"><div class="bo-y"><b>${c.year}</b><small>${esc(compName(c.comp))}</small></div><div class="bo-who">${teamFlag(c.team)}<b>${esc(teamName(c.team))}</b></div>${pro?`<button class="icon-btn" data-action="cup-del" data-c="${c.comp}" data-y="${c.year}" aria-label="Quitar ${esc(compName(c.comp))} ${c.year}" title="Quitar">${ic('x')}</button>`:''}</div>`).join('')}</div>`
-        :`<p class="hint">Aún no has apuntado ningún campeón de tu carrera. Cuando en tu partida termine un Mundial, una Eurocopa o una Copa América, apunta quién ganó con <b>Apuntar campeón</b>.</p>`}</div>`;
-    return `${head}${lock}<div class="toolbar">${tabs}</div><div class="intl-grid">${cards}</div>${list}${note}`;
+    /* un hueco por cada torneo del verano de cada temporada apuntada (como el Balón de Oro) */
+    const slots=cupSlots();
+    const list=`<div class="card intl-mine"><div class="card-h"><h2>En tu carrera</h2><span class="sub">Campeón de cada torneo</span></div>
+      ${slots.length?`<div class="bo-list cup-list">${slots.map(r=>{
+        const w=intlCups().find(c=>c.comp===r.comp&&c.year===r.year);
+        const who=w?(pro?`<button class="bo-who" data-action="cup-new" data-c="${r.comp}" data-y="${r.year}" data-t="${w.team}" title="Cambiar">${teamFlag(w.team)}<b>${esc(teamName(w.team))}</b></button>`:`<div class="bo-who">${teamFlag(w.team)}<b>${esc(teamName(w.team))}</b></div>`)
+          :`<div class="bo-who"><span class="none">Sin apuntar</span></div>`;
+        const act=w?(pro?`<button class="icon-btn" data-action="cup-del" data-c="${r.comp}" data-y="${r.year}" aria-label="Quitar ${esc(compName(r.comp))} ${r.year}" title="Quitar">${ic('x')}</button>`:'')
+          :`<button class="btn secondary sm" data-action="${pro?'cup-new':'pro-gate'}" data-k="intl" data-c="${r.comp}" data-y="${r.year}">${ic(pro?'plus':'lock')}Apuntar</button>`;
+        return `<div class="bo-row"><div class="bo-y"><b>${r.year}</b><small>${esc(compName(r.comp))}</small></div>${who}${act}</div>`;}).join('')}</div>`
+        :`<p class="hint">${S.seasons.length?`Aún no ha habido ningún torneo de selecciones en tu carrera. El próximo: <b>${nextCups()}</b>.`:'Cuando apuntes tus temporadas, aquí podrás poner quién ganó el Mundial, la Eurocopa y la Copa América de cada verano.'}</p>`}
+      <p class="hint">${ic('info')}Mundial en 2018, 2022, 2026…; Eurocopa y Copa América en 2020, 2024, 2028… Salen al apuntar la temporada que termina ese verano. Si en tu partida hubo otro, usa <b>Apuntar campeón</b>.</p></div>`;
+    return `${head}${lock}<div class="toolbar">${tabs}</div>${list}<div class="intl-grid">${cards}</div>${note}`;
   }
   const rows=ballonRanking(), max=rows.length?rows[0].n:1, shown=UI.boAll?rows:rows.filter(r=>r.rank<=10);
   const rk=`<div class="aw-card intl-card"><div class="aw-head">${awardIcon('ball')}<div><h3>Ranking del Balón de Oro</h3><span>${rows.reduce((a,r)=>a+r.n,0)} entregados · ${rows.length} jugadores</span></div></div>
@@ -2037,14 +2049,26 @@ function renderInternacional(){
       :'<p class="hint">Cuando apuntes tu primera temporada, aquí podrás poner quién ganó el Balón de Oro.</p>'}</div>`;
   return `${head}${lock}<div class="toolbar">${tabs}</div><div class="bo-wrap">${rk}${cur}</div>${note}`;
 }
+/* Torneos de selecciones de cada verano: Mundial en 2018, 2022, 2026…; Eurocopa y Copa América en 2020, 2024, 2028… */
+const cupsOfYear=y=>y%4===2?['wc']:y%4===0?['euro','copa']:[];
+function cupSlots(){
+  const rows=[];
+  S.seasons.forEach(se=>{const y=seasonYear(se.label);cupsOfYear(y).forEach(k=>rows.push({comp:k,year:y}));});
+  intlCups().forEach(c=>{if(!rows.some(r=>r.comp===c.comp&&r.year===c.year))rows.push({comp:c.comp,year:c.year});}); /* los apuntados a mano también */
+  const ord=k=>CUP_COMPS.findIndex(c=>c[0]===k);
+  return rows.sort((a,b)=>b.year-a.year||ord(a.comp)-ord(b.comp));
+}
+const nextCups=()=>{let y=seasonYear(S.current.label);while(!cupsOfYear(y).length)y++;return cupsOfYear(y).map(compName).join(' y ')+' '+y;};
 /* Apuntar la selección campeona de un torneo de tu carrera */
 const natOptions=sel=>NATS.slice().sort((a,b)=>a[2].localeCompare(b[2],'es')).map(([c,,n])=>`<option value="${c}" ${c===sel?'selected':''}>${n}</option>`).join('');
-function openCupForm(){
-  openModal(`${mHead('Apuntar campeón','Selección que ganó un torneo en tu carrera')}
+/* comp, year y team: si se abre desde un hueco de "En tu carrera" (o para cambiar uno ya apuntado) */
+function openCupForm(comp,year,team){
+  const t=NAT[team]?team:'ESP', ys=careerYears(); if(year&&!ys.includes(year))ys.unshift(year);
+  openModal(`${mHead(comp&&year?`${compName(comp)} ${year}`:'Apuntar campeón','Selección que ganó un torneo en tu carrera')}
   <form class="form" data-form="cup" autocomplete="off">
-    <div class="field"><label for="cup-comp">Competición</label><select class="input" id="cup-comp" name="comp">${CUP_COMPS.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select></div>
-    <div class="field"><label for="cup-year">Año</label><select class="input" id="cup-year" name="year">${careerYears().map(y=>`<option>${y}</option>`).join('')}</select></div>
-    <div class="field full"><label for="cup-team">Selección campeona</label><div class="nat-field"><span class="nat-flag" id="cup-team-flag">${flag('ESP')}</span><select class="input" id="cup-team" name="team">${natOptions('ESP')}</select></div></div>
+    <div class="field"><label for="cup-comp">Competición</label><select class="input" id="cup-comp" name="comp">${CUP_COMPS.map(([k,n])=>`<option value="${k}" ${k===comp?'selected':''}>${n}</option>`).join('')}</select></div>
+    <div class="field"><label for="cup-year">Año</label><select class="input" id="cup-year" name="year">${ys.map(y=>`<option ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
+    <div class="field full"><label for="cup-team">Selección campeona</label><div class="nat-field"><span class="nat-flag" id="cup-team-flag">${flag(t)}</span><select class="input" id="cup-team" name="team">${natOptions(t)}</select></div></div>
   </form>
   <p class="hint" style="margin-top:12px">${ic('info')}Si ya habías apuntado ese torneo y ese año, se cambia por este.</p>
   <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="cup-save">${ic('check')}Guardar campeón</button></div>`);
@@ -3288,7 +3312,7 @@ const ACTIONS={
   },
   itab(b){UI.itab=b.dataset.t;rerender();},
   'bo-all'(){UI.boAll=!UI.boAll;rerender();},
-  'cup-new'(){if(isPro())openCupForm();else openProGate('intl');},
+  'cup-new'(b){if(!isPro()){openProGate('intl');return;}openCupForm(b.dataset.c,b.dataset.y?+b.dataset.y:null,b.dataset.t);},
   'cup-save'(){const f=document.querySelector('form[data-form="cup"]');if(f)FORMS.cup(new FormData(f));},
   'cup-del'(b){if(!isPro())return;const c=b.dataset.c,y=+b.dataset.y;INTL_W().cups=intlCups().filter(x=>!(x.comp===c&&x.year===y));save();rerender();toast(`${compName(c)} ${y} quitado`,'x');},
   'bo-new'(b){if(isPro())openBallonForm(b.dataset.s);else openProGate('intl');},
