@@ -1805,7 +1805,7 @@ function renderPlantilla(){
     </div>
     <div class="card">
       <div class="card-h"><h2>Banquillo</h2><span class="sub">${bench.length} jugadores</span></div>
-      ${bench.map(p=>`<div class="bench-row ${p.loan?'is-loan':''}" ${p.loan?'':`data-drag="bench" data-drag-id="${p.id}"`}><button class="bench-main" data-action="player" data-id="${p.id}">${miniShirt(p)}<div class="who"><b>${esc(p.name)}</b><small>${benchSub(p)}</small></div>${p.loan?loanTag:''}${tags(p)}${posb(p.pos)}${rate(p.ovr)}</button>${p.loan?'':`<span class="grip" aria-hidden="true">${ic('grip')}</span>`}</div>`).join('')||(sq.length?'<p class="hint">Sin suplentes.</p>':`<div class="squad-empty"><b>Tu plantilla está vacía</b><p>Los jugadores se añaden al apuntar cada temporada. Los 11 primeros forman el once.</p><button class="btn primary sm" data-nav="apuntar">${ic('userPlus')}Apuntar temporada</button></div>`)}
+      ${bench.map(p=>`<div class="bench-row ${p.loan?'is-loan':''}" data-drag="bench" data-drag-id="${p.id}" ${p.loan?'data-loan="1"':''}><button class="bench-main" data-action="player" data-id="${p.id}">${miniShirt(p)}<div class="who"><b>${esc(p.name)}</b><small>${benchSub(p)}</small></div>${p.loan?loanTag:''}${tags(p)}${posb(p.pos)}${rate(p.ovr)}</button><span class="grip" aria-hidden="true">${ic('grip')}</span></div>`).join('')||(sq.length?'<p class="hint">Sin suplentes.</p>':`<div class="squad-empty"><b>Tu plantilla está vacía</b><p>Los jugadores se añaden al apuntar cada temporada. Los 11 primeros forman el once.</p><button class="btn primary sm" data-nav="apuntar">${ic('userPlus')}Apuntar temporada</button></div>`)}
       ${pref&&pref.length?`<button class="link xi-auto" data-action="xi-auto">${ic('refresh')}Volver al once automático (por media)</button>`:''}
     </div>
   </div>`;
@@ -2496,6 +2496,7 @@ function reorderBench(a,b){
 function swapInView(a,b){
   const V=viewXI(), SLOTS=slotsF(V.f), slots=slotsOf(V.xi), ia=slots.indexOf(a), ib=slots.indexOf(b);
   if(ia<0&&ib<0)return false;
+  if(V.sq.some(p=>p.loan&&(p.id===a||p.id===b)))return false; /* un cedido no entra en el once */
   const A=surname(byId(a).name), B=surname(byId(b).name);
   let msg;
   if(ia>=0&&ib>=0){slots[ia]=b;slots[ib]=a;msg=`${A} y ${B} cambian de posición`;}
@@ -3383,7 +3384,7 @@ function slotOfTarget(t){
 }
 function ghostText(src,t){
   const inForm=!!src.item.closest('#seasonForm');
-  if(!t)return src.group==='xi'?'Suéltalo sobre otro jugador':inForm?'Suéltalo sobre un titular':'Suéltalo sobre un titular o un suplente';
+  if(!t)return src.group==='xi'?'Suéltalo sobre otro jugador':inForm?'Suéltalo sobre un titular':src.item.dataset.loan?'Cedido: suéltalo sobre otro suplente':'Suéltalo sobre un titular o un suplente';
   const other=surname(byId(t.dataset.dragId).name), tXI=dragGroup(t)==='xi';
   if(src.group==='xi'&&tXI)return `Cambia de posición con ${other}`;
   if(src.group==='bench'&&!tXI)return `Ocupa el sitio de ${other} en el banquillo`;
@@ -3401,7 +3402,10 @@ function startDrag(x,y){
   const scope=p.item.closest('#seasonForm')||$('#main');
   /* un titular también se puede soltar sobre otro titular para cambiarles la posición */
   const inForm=!!p.item.closest('#seasonForm');
-  DRAG.targets=[...scope.querySelectorAll('[data-drag-id]')].filter(t=>t!==p.item&&(dragGroup(t)!==p.group||p.group==='xi'||(!inForm&&p.group==='bench')));
+  /* un cedido de Plantilla solo cambia de sitio en el banquillo (no puede entrar en el once), y nadie del once puede cambiarse por él */
+  const loanSrc=!inForm&&!!p.item.dataset.loan;
+  DRAG.targets=[...scope.querySelectorAll('[data-drag-id]')].filter(t=>t!==p.item&&(dragGroup(t)!==p.group||p.group==='xi'||(!inForm&&p.group==='bench'))
+    &&(!loanSrc||dragGroup(t)==='bench')&&(inForm||!t.dataset.loan||p.group==='bench'));
   DRAG.targets.forEach((t,i)=>{t.classList.add('drop-cand');t.style.setProperty('--jd',`${-(i%5)*.06}s`);});
   vib(15);
   moveDrag(x,y); scrollLoop();
@@ -3414,7 +3418,7 @@ function moveDrag(x,y){
     if(DRAG.over)DRAG.over.classList.remove('drop-over');
     if(t){t.classList.add('drop-over');vib(8);}
     DRAG.over=t; DRAG.ghost.classList.toggle('ok',!!t);
-    DRAG.ghost.querySelector('span').textContent=ghostText(DRAG.src,t);
+    DRAG.ghost.querySelector('div span').textContent=ghostText(DRAG.src,t);
   }
 }
 /* si arrastras cerca del borde de la pantalla, la página se desplaza sola */
