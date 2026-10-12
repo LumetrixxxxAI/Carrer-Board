@@ -2120,7 +2120,8 @@ const formAgeOf=id=>{const p=byId(id), se=formSeason();return p?(se?ageIn(se,p):
    (si ya había uno apuntado de más edad, se deja, con su edad a la vista, para no cambiarlo sin querer) */
 function awOptions(a,sel,keep=true){
   const young=a===YOUNG, list=FORM_AW_PLAYERS.filter(p=>!young||formAgeOf(p.id)<=YOUNG_MAX||(keep&&p.id===sel));
-  if(!list.length)return `<option value="">Nadie con ${YOUNG_MAX} años o menos</option>`;
+  /* sin nadie que elegir: o aún no hay jugadores en la temporada, o (solo en el Mejor Jugador Joven) nadie tiene 21 años o menos */
+  if(!list.length)return `<option value="">${FORM_AW_PLAYERS.length?`Nadie con ${YOUNG_MAX} años o menos`:'Añade antes a los jugadores de la temporada'}</option>`;
   return list.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)} · ${p.pos}${young?` · ${formAgeOf(p.id)} años`:''}</option>`).join('');
 }
 function refreshAwOptions(){document.querySelectorAll('#seasonForm .aw-row').forEach(r=>{const ps=r.querySelector('[name="aw_p"]');ps.innerHTML=awOptions(r.querySelector('[name="aw_a"]').value,+ps.value);});}
