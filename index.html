@@ -7,7 +7,7 @@
 <script>/* tema guardado (claro, oscuro o el de tu club) antes de pintar la página */
 (function(){try{var d=document.documentElement,t=((JSON.parse(localStorage.getItem('careerboard-boceto-v4'))||{}).settings||{}).theme;if(t==='auto')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
 if(t==='club'){var v=localStorage.getItem('cb-plan-last')==='pro'&&JSON.parse(localStorage.getItem('cb-club-vars')||'null');t='light';if(v){for(var k in v)d.style.setProperty(k,v[k]);d.dataset.club='1';document.querySelector('meta[name="theme-color"]').content=v['--club-hdr'];}}
-if(t)d.dataset.theme=t;}catch(e){}})();</script>
+if(t)d.dataset.theme=t;if(localStorage.getItem('cb-sesion')==='1')d.classList.add('cb-in');}catch(e){}})();</script>
 <title>Career Board · Modo Carrera</title>
 <meta name="description" content="Boceto de Career Board: apunta al final de cada temporada los goles, asistencias, partidos y medias de tu plantilla del modo carrera.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -920,6 +920,7 @@ button.m-row:hover{background:var(--surface-2)}
 }
 
 /* ---------- Plan Pro: avisos y etiquetas ---------- */
+html.cb-in #intro{display:none}
 .pro-pill.on{background:linear-gradient(135deg,#f7d061,#d9a21b);color:#3b2a00;border-color:#d9a21b}
 .pro-gate{display:flex;gap:14px;padding:16px;border-radius:14px;background:var(--gold-soft);border:1px solid var(--gold-line);color:var(--text-2);font-size:14px;line-height:1.5}
 .pro-gate>.ic{width:26px;height:26px;flex:none;color:var(--gold)}
@@ -1245,15 +1246,17 @@ function kitFill(k){
 function shirt(o={}){
   const k=o.gk?S.gkKit:(o.kit||S.kit), back=!!o.back, d=SHIRT_D(back?8:12);
   const num=o.num==null?'':o.num, name=(o.name||'').toUpperCase();
+  /* contorno de las letras: el color secundario o, si se parece a las letras (blanco sobre blanco), el principal */
+  const sk=contrastOf(k.num,k.c2)>=1.6?k.c2:contrastOf(k.num,k.c1)>=1.6?k.c1:k.trim;
   const cuffs=`<path d="M6 27L15 42L18.4 39.9L9.4 24.9ZM94 27L85 42L81.6 39.9L90.6 24.9Z" fill="${k.trim}"/>`;
   const collar=`<path d="M39 5Q50 ${back?8:12} 61 5" fill="none" stroke="${k.trim}" stroke-width="3.4" stroke-linecap="round"/>`;
   let txt='';
   if(back){
-    if(name)txt+=`<text x="50" y="29" text-anchor="middle" class="sh-name" font-size="${name.length>8?7.2:9.4}" fill="${k.num}" stroke="${k.c2}" stroke-width="1.6" paint-order="stroke">${esc(name)}</text>`;
-    txt+=`<text x="50" y="${name?77:72}" text-anchor="middle" class="sh-num" font-size="${name?40:44}" fill="${k.num}" stroke="${k.c2}" stroke-width="2.6" paint-order="stroke">${num}</text>`;
+    if(name)txt+=`<text x="50" y="29" text-anchor="middle" class="sh-name" font-size="${name.length>8?7.2:9.4}" fill="${k.num}" stroke="${sk}" stroke-width="1.6" paint-order="stroke">${esc(name)}</text>`;
+    txt+=`<text x="50" y="${name?77:72}" text-anchor="middle" class="sh-num" font-size="${name?40:44}" fill="${k.num}" stroke="${sk}" stroke-width="2.6" paint-order="stroke">${num}</text>`;
   }else{
     txt=`<path d="M57.5 17.5h7v6c0 2.4-1.6 4-3.5 4.8-1.9-.8-3.5-2.4-3.5-4.8z" fill="${k.trim}"/>`;
-    if(num!=='')txt+=`<text x="50" y="68" text-anchor="middle" class="sh-num" font-size="30" fill="${k.num}" stroke="${k.c2}" stroke-width="2.2" paint-order="stroke">${num}</text>`;
+    if(num!=='')txt+=`<text x="50" y="68" text-anchor="middle" class="sh-num" font-size="30" fill="${k.num}" stroke="${sk}" stroke-width="2.2" paint-order="stroke">${num}</text>`;
   }
   return `<svg class="shirt" viewBox="0 0 100 100" aria-hidden="true"><g clip-path="url(#${back?'shirtB':'shirtF'})">${kitFill(k)}${cuffs}<path d="${d}" fill="url(#shirtShade)"/></g>${collar}${txt}<path d="${d}" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
 }
@@ -2352,7 +2355,7 @@ const PAGES={inicio:renderInicio,plantilla:renderPlantilla,temporadas:renderTemp
 const NAV={inicio:['home','Inicio'],plantilla:['users','Plantilla'],temporadas:['calendar','Temporadas'],historia:['book','Historia'],internacional:['globe','Internacional']};
 
 /* ---------- Pantallas y navegación ---------- */
-function screen(which){['intro','login','app'].forEach(id=>{$('#'+id).hidden=id!==which;});window.scrollTo(0,0);}
+function screen(which){document.documentElement.classList.remove('cb-in');['intro','login','app'].forEach(id=>{$('#'+id).hidden=id!==which;});window.scrollTo(0,0);}
 function go(page,keep){
   closeBajaPop();
   if(page==='apuntar'&&UI.edit==null&&seasonsFull()){openProGate('seasons');return;} /* plan Amateur: hasta 5 temporadas */
@@ -2383,14 +2386,19 @@ function setSlide(i){
   document.querySelectorAll('#dots button').forEach((d,k)=>d.classList.toggle('on',k===slide));
   $('#nextBtn').innerHTML=(slide===NS-1?'Empezar':'Siguiente')+ic('arrowRight');
 }
+const INTRO_KIT={pattern:'plain',c1:'#d71920',c2:'#d71920',trim:'#ffffff',num:'#ffffff'};
 function buildIntroVisuals(){
+  const keep=[S.kit,S.gkKit]; S.kit=INTRO_KIT; S.gkKit=DEMO.gkKit; /* la intro enseña siempre la misma camiseta: roja entera */
+  try{buildIntroInner();}finally{[S.kit,S.gkKit]=keep;}
+}
+function buildIntroInner(){
   const P=id=>DEMO.players.find(p=>p.id===id);
   const b=p=>shirt({num:p.num,name:surname(p.name),back:true});
   $('#vis1').innerHTML=`<div class="fan"><div class="disc"></div><div class="fs f2">${b(P(9))}</div><div class="fs f1">${b(P(10))}</div><div class="fs f3">${b(P(8))}</div>
     <div class="fchip fc2"><span class="ico">${ic('trophy')}</span><div><b>Europa League</b><span>Campeones 2029/30</span></div></div>
     <div class="fchip fc1"><span class="ico g">${ic('ball')}</span><div><b>42 goles</b><span>Robles · récord del club</span></div></div></div>`;
   const rows=[[P(10),49,36,10,89],[P(9),47,20,14,87],[P(8),50,16,22,88],[P(7),48,9,16,86]];
-  $('#vis2').innerHTML=`<div style="position:relative"><div class="formock"><h4>Fin de temporada 2030/31</h4><div class="sub">Málaga CF · LaLiga · 1º</div>
+  $('#vis2').innerHTML=`<div style="position:relative"><div class="formock"><h4>Fin de temporada 2030/31</h4><div class="sub">Tu club · LaLiga · 1º</div>
     <div class="fm-h"><span>Jugador</span><span>PJ</span><span>G</span><span>A</span><span>Med.</span></div>
     ${rows.map(([p,pj,g,a,m])=>`<div class="fm-r"><div class="who">${miniShirt(p)}${esc(surname(p.name))}</div><i>${pj}</i><i>${g}</i><i>${a}</i><i style="background:var(--green-soft);color:var(--green-d);border-color:var(--green-soft-2)">${m}</i></div>`).join('')}
     <span class="btn primary">${ic('check')}Guardar temporada</span></div>
@@ -3040,6 +3048,7 @@ async function doLogin(){
 /* Firebase avisa aquí cada vez que cambia la sesión (también al abrir la app si ya habías entrado) */
 window.onAuthUser=async u=>{
   AUTH_USER=u;
+  try{if(u)localStorage.setItem('cb-sesion','1');else localStorage.removeItem('cb-sesion');}catch(e){}
   if(u){
     /* el plan guardado en este dispositivo vale hasta que llegue el de tu cuenta */
     try{PLAN=localStorage.getItem('cb-plan-'+u.uid)==='pro'?'pro':'free';}catch(e){}
@@ -3438,6 +3447,10 @@ document.addEventListener('keydown',e=>{
   applyPrefs();
   buildIntroVisuals();
   setSlide(0);
+  /* ya habías entrado con Google: se abre tu carrera mientras Firebase confirma la sesión (si no la confirma, va al login) */
+  let ses=false; try{ses=localStorage.getItem('cb-sesion')==='1';}catch(e){}
+  if(FB_ON&&ses&&location.protocol!=='file:'){screen('app');go('inicio');}
+  document.documentElement.classList.remove('cb-in');
 })();
 </script>
 
