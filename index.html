@@ -979,6 +979,15 @@ html[data-club] .tok-r.r-hi{color:#0f6d32}
 @media (max-width:900px){.bo-wrap{grid-template-columns:minmax(0,1fr)}}
 .bo-more{margin-top:12px}
 .intl-mine{margin-bottom:16px}
+.cup-pl{display:flex;flex-direction:column;gap:2px;max-height:240px;overflow:auto;padding:4px;border:1px solid var(--line);border-radius:12px}
+.cup-pl .hint{margin:6px}
+.cup-chk{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:9px;cursor:pointer;font-size:14px}
+.cup-chk:hover{background:var(--surface-2)}
+.cup-chk input{width:18px;height:18px;accent-color:var(--green);flex:none}
+.cup-chk .mini-shirt{width:26px}
+.cup-chk b{font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cup-more summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--green-d);padding:6px 8px;list-style:none}
+.aw-head .tro-img{width:66px;height:66px;object-fit:contain;flex:none}
 .bo-list.cup-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:8px;margin-bottom:6px}
 .bo-who .none{white-space:nowrap}
 .cup-list .bo-y{min-width:92px}
@@ -1322,7 +1331,8 @@ const SHAPE={'LaLiga':'league','LaLiga Hypermotion':'league','Copa del Rey':'cup
   'Bundesliga':'plate','2. Bundesliga':'plate','DFB-Pokal':'tall','Supercopa de Alemania':'cup',
   'Ligue 1':'league','Ligue 2':'league','Coupe de France':'vase','Trophée des Champions':'plate',
   'Liga':'league','Copa nacional':'cup','Supercopa nacional':'plate',
-  'UEFA Champions League':'ears','UEFA Europa League':'vase','UEFA Conference League':'tall','Supercopa de Europa':'plate'};
+  'UEFA Champions League':'ears','UEFA Europa League':'vase','UEFA Conference League':'tall','Supercopa de Europa':'plate',
+  'Mundial':'tall','Eurocopa':'cup','Copa América':'vase'}; /* (selecciones: salen en la ficha de los jugadores que los ganaron) */
 function titleChips(div,checked){
   const list=[...new Set([...titlesFor(div),...checked])];
   return list.map(t=>`<label class="tchk"><input type="checkbox" name="titles" value="${esc(t)}" ${checked.includes(t)?'checked':''}><span>${trophyMini(t)}${esc(t)}</span></label>`).join('');
@@ -2040,7 +2050,7 @@ function renderInternacional(){
   if(tab==='sel'){
     const cards=CUP_COMPS.map(([k,name,shape,hist])=>{
       const rows=cupRanking(k,hist), max=rows.length?rows[0].n:1, ed=rows.reduce((a,r)=>a+r.n,0);
-      return `<div class="aw-card intl-card"><div class="aw-head">${trophy(shape)}<div><h3>${name}</h3><span>${ed} ediciones · ${rows.length} campeones</span></div></div>
+      return `<div class="aw-card intl-card"><div class="aw-head">${trophyOf(name)}<div><h3>${name}</h3><span>${ed} ediciones · ${rows.length} campeones</span></div></div>
         <div class="rk">${rows.map(r=>rkRow(r,`<span class="rk-flag">${teamFlag(r.team)}</span>${rkTxt(r.name,r.n,max)}`)).join('')}</div></div>`;
     }).join('');
     /* un hueco por cada torneo del verano de cada temporada apuntada (como el Balón de Oro) */
@@ -2048,7 +2058,7 @@ function renderInternacional(){
     const list=`<div class="card intl-mine"><div class="card-h"><h2>En tu carrera</h2><span class="sub">Campeón de cada torneo</span></div>
       ${slots.length?`<div class="bo-list cup-list">${slots.map(r=>{
         const w=intlCups().find(c=>c.comp===r.comp&&c.year===r.year);
-        const who=w?(pro?`<button class="bo-who" data-action="cup-new" data-c="${r.comp}" data-y="${r.year}" data-t="${w.team}" title="Cambiar">${teamFlag(w.team)}<b>${esc(teamName(w.team))}</b></button>`:`<div class="bo-who">${teamFlag(w.team)}<b>${esc(teamName(w.team))}</b></div>`)
+        const who=w?(pro?`<button class="bo-who" data-action="cup-new" data-c="${r.comp}" data-y="${r.year}" data-t="${w.team}" title="Cambiar">${teamFlag(w.team)}<b>${esc(teamName(w.team))}</b>${clubTag(w)}</button>`:`<div class="bo-who">${teamFlag(w.team)}<b>${esc(teamName(w.team))}</b>${clubTag(w)}</div>`)
           :`<div class="bo-who"><span class="none">Sin apuntar</span></div>`;
         const act=w?(pro?`<button class="icon-btn" data-action="cup-del" data-c="${r.comp}" data-y="${r.year}" aria-label="Quitar ${esc(compName(r.comp))} ${r.year}" title="Quitar">${ic('x')}</button>`:'')
           :`<button class="btn secondary sm" data-action="${pro?'cup-new':'pro-gate'}" data-k="intl" data-c="${r.comp}" data-y="${r.year}">${ic(pro?'plus':'lock')}Apuntar</button>`;
@@ -2074,6 +2084,24 @@ function renderInternacional(){
       :'<p class="hint">Cuando apuntes tu primera temporada, aquí podrás poner quién ganó el Balón de Oro.</p>'}</div>`;
   return `${head}${lock}<div class="toolbar">${tabs}</div><div class="bo-wrap">${rk}${cur}</div>${note}`;
 }
+/* "3 de tu club": jugadores de tu club que estaban en la selección campeona */
+const clubTag=c=>c.players&&c.players.length?`<span class="tag ret-tag">${c.players.length} de tu club</span>`:'';
+/* Jugadores que se pueden marcar en el formulario del torneo: los de tu plantilla de la temporada que termina ese verano
+   (si aún no está apuntada, la de ahora). Primero los de esa nacionalidad; los demás, plegados por si alguno juega con otra. */
+function renderCupPlayers(){
+  const box=$('#cup-players'); if(!box)return;
+  const y=parseInt($('#cup-year').value), team=$('#cup-team').value, comp=$('#cup-comp').value;
+  const prev=box.dataset.ready?new Set([...box.querySelectorAll('input:checked')].map(i=>+i.value))
+    :new Set(((intlCups().find(c=>c.comp===comp&&c.year===y)||{}).players)||[]);
+  box.dataset.ready='1';
+  const se=S.seasons.find(x=>seasonYear(x.label)===y);
+  const pool=(se?Object.keys(se.stats).map(byId):y===seasonYear(S.current.label)?squad():[]).filter(Boolean);
+  if(!pool.length){box.innerHTML=`<p class="hint">Apunta antes la temporada ${y-1}/${String(y).slice(2)} para elegir a tus jugadores.</p>`;return;}
+  const item=p=>`<label class="cup-chk"><input type="checkbox" name="cpl" value="${p.id}" ${prev.has(p.id)?'checked':''}>${miniShirt(withNum(se,p))}<b>${esc(p.name)}</b>${flag(p.nat)}</label>`;
+  const mine=pool.filter(p=>p.nat===team), rest=pool.filter(p=>p.nat!==team);
+  box.innerHTML=(mine.length?mine.map(item).join(''):`<p class="hint">Ningún jugador de tu plantilla es de ${esc(teamName(team))}.</p>`)
+    +(rest.length?`<details class="cup-more" ${rest.some(p=>prev.has(p.id))?'open':''}><summary>Otros jugadores de tu plantilla (${rest.length})</summary>${rest.map(item).join('')}</details>`:'');
+}
 /* Torneos de selecciones de cada verano: Mundial en 2018, 2022, 2026…; Eurocopa y Copa América en 2020, 2024, 2028… */
 const cupsOfYear=y=>y%4===2?['wc']:y%4===0?['euro','copa']:[];
 function cupSlots(){
@@ -2094,9 +2122,11 @@ function openCupForm(comp,year,team){
     <div class="field"><label for="cup-comp">Competición</label><select class="input" id="cup-comp" name="comp">${CUP_COMPS.map(([k,n])=>`<option value="${k}" ${k===comp?'selected':''}>${n}</option>`).join('')}</select></div>
     <div class="field"><label for="cup-year">Año</label><select class="input" id="cup-year" name="year">${ys.map(y=>`<option ${y===year?'selected':''}>${y}</option>`).join('')}</select></div>
     <div class="field full"><label for="cup-team">Selección campeona</label><div class="nat-field"><span class="nat-flag" id="cup-team-flag">${flag(t)}</span><select class="input" id="cup-team" name="team">${natOptions(t)}</select></div></div>
+    <div class="field full cup-pl-f"><span class="flabel">Jugadores de tu club en esa selección</span><div id="cup-players" class="cup-pl"></div></div>
   </form>
-  <p class="hint" style="margin-top:12px">${ic('info')}Si ya habías apuntado ese torneo y ese año, se cambia por este.</p>
+  <p class="hint" style="margin-top:12px">${ic('info')}A los que marques les sale este título en su ficha. Si ya habías apuntado ese torneo y ese año, se cambia por este.</p>
   <div class="modal-f"><button class="btn secondary" data-action="close-modal">Cancelar</button><button class="btn primary" data-action="cup-save">${ic('check')}Guardar campeón</button></div>`);
+  renderCupPlayers();
 }
 /* Apuntar el Balón de Oro de una temporada (si es de tu club, va a sus premios individuales) */
 function openBallonForm(label){
@@ -2582,9 +2612,12 @@ function openPlayer(id){
     .sort((a,b)=>AWARDS.findIndex(([k])=>k===a.k)-AWARDS.findIndex(([k])=>k===b.k));
   const myTitles=group(S.seasons.filter(se=>se.stats[p.id]&&!isLoan(se,p.id)).flatMap(se=>se.titles.map(t=>[t,se.label])))
     .sort((a,b)=>b.years.length-a.years.length);
+  /* títulos con su selección (Mundial, Eurocopa, Copa América) apuntados en Internacional */
+  const myIntl=group(intlCups().filter(c=>(c.players||[]).includes(p.id)).sort((a,b)=>a.year-b.year).map(c=>[compName(c.comp),String(c.year)]));
   const shelfItem=(x,img)=>`<div class="pm-tro" tabindex="0" data-tip="${esc(x.k)} · ${x.years.map(y=>y.slice(2)).join(', ')}" aria-label="${esc(x.k)}: ${x.years.length} ${x.years.length===1?'vez':'veces'} (${x.years.join(', ')})">${img}<span class="pm-x">×${x.years.length}</span></div>`;
   const hl=(myAwards.length?`<div class="pm-shelf-sec"><span class="pm-shelf-t">Premios individuales</span><div class="pm-shelf">${myAwards.map(x=>shelfItem(x,awardIcon(awardIconOf(x.k)))).join('')}</div></div>`:'')
-    +(myTitles.length?`<div class="pm-shelf-sec"><span class="pm-shelf-t">Títulos con el club</span><div class="pm-shelf">${myTitles.map(x=>shelfItem(x,trophyOf(x.k))).join('')}</div></div>`:'');
+    +(myTitles.length?`<div class="pm-shelf-sec"><span class="pm-shelf-t">Títulos con el club</span><div class="pm-shelf">${myTitles.map(x=>shelfItem(x,trophyOf(x.k))).join('')}</div></div>`:'')
+    +(myIntl.length?`<div class="pm-shelf-sec"><span class="pm-shelf-t">Con su selección</span><div class="pm-shelf">${myIntl.map(x=>shelfItem(x,trophyOf(x.k))).join('')}</div></div>`:'');
   openModal(`<div class="modal-h" style="margin-bottom:0"><div></div><button class="icon-btn" data-action="close-modal" aria-label="Cerrar">${ic('x')}</button></div>
   <div class="pm-head"><div class="sh">${shirt({num:p.num,name:surname(p.name),back:true,gk})}</div>
     <div><h2>${esc(p.name)}</h2><div class="meta">${posb(p.pos)} Dorsal ${p.num} · ${p.age} años · <span class="nat">${flag(p.nat)}${esc(natName(p.nat))}</span> ${tags(p)}</div>
@@ -3035,9 +3068,10 @@ const FORMS={
     const comp=fd.get('comp'), year=parseInt(fd.get('year')), team=fd.get('team');
     if(!CUP_COMPS.some(c=>c[0]===comp)||!year||!NAT[team])return;
     const I=INTL_W(), had=I.cups.some(c=>c.comp===comp&&c.year===year);
-    I.cups=I.cups.filter(c=>!(c.comp===comp&&c.year===year)); I.cups.push({comp,year,team});
+    const players=[...new Set(fd.getAll('cpl').map(Number))].filter(id=>byId(id)); /* jugadores de tu club en esa selección */
+    I.cups=I.cups.filter(c=>!(c.comp===comp&&c.year===year)); I.cups.push({comp,year,team,...(players.length?{players}:{})});
     save(); closeModal(); UI.itab='sel'; rerender();
-    toast(`${compName(comp)} ${year}: ${teamName(team)}${had?' (cambiado)':''}`,'trophy');
+    toast(`${compName(comp)} ${year}: ${teamName(team)}${players.length?` · ${players.length} de tu club`:''}${had?' (cambiado)':''}`,'trophy');
   },
   ballon(fd){
     if(!isPro()){openProGate('intl');return;}
@@ -3381,6 +3415,7 @@ document.addEventListener('change',e=>{
   if(e.target.matches('[data-psea]')){UI.psea=e.target.value;rerender();}
   if(e.target.matches('[data-formation]'))changeFormation(e.target.value);
   if(e.target.id==='p-nat'||e.target.id==='cup-team'||e.target.id==='bo-nat')$('#'+e.target.id+'-flag').innerHTML=flag(e.target.value);
+  if(e.target.id==='cup-team'||e.target.id==='cup-year')renderCupPlayers();
   if(e.target.matches('[data-set]'))applySetting(e.target);
   /* al cambiar de liga en el formulario, los títulos pasan a ser los de ese país (se quitan los que ya no valen) */
   if(e.target.matches('#seasonForm [name="aw_a"]')){const ps=e.target.closest('.aw-row').querySelector('[name="aw_p"]');ps.innerHTML=awOptions(e.target.value,+ps.value,false);}
