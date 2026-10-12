@@ -33,6 +33,7 @@ if(t)d.dataset.theme=t;if(localStorage.getItem('cb-sesion')==='1')d.classList.ad
   --tabbar:0px;
   --chip:#eef1ed; --chip-2:#e9ede8; --hdr-bg:rgba(255,255,255,.92); --bar-bg:rgba(255,255,255,.96); --veil:rgba(243,245,242,.85);
   --tip-bg:#101a14; --tip-fg:#fff;
+  --violet:#5b3fb8; --violet-soft:#f0ebfd; --violet-line:#d9cef7;
   color-scheme:light;
 }
 /* ---------- Tema oscuro (Configuración › Preferencias › Tema) ---------- */
@@ -45,6 +46,7 @@ html[data-theme="dark"]{
   --blue:#86b0f2; --blue-soft:#14213a; --red:#f2767e; --red-soft:#33171a;
   --chip:#222d27; --chip-2:#1c2520; --hdr-bg:rgba(13,19,16,.88); --bar-bg:rgba(13,19,16,.94); --veil:rgba(13,19,16,.8);
   --tip-bg:#e7eee9; --tip-fg:#0d1310;
+  --violet:#bba8f7; --violet-soft:#211b36; --violet-line:#3d3263;
   --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow:0 14px 34px -14px rgba(0,0,0,.75);
   --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2387968c' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   color-scheme:dark;
@@ -603,7 +605,8 @@ select.input{-webkit-appearance:none;appearance:none;background:var(--surface) v
 .tchk input:checked+span{background:var(--gold-soft);border-color:var(--gold-line);color:var(--gold)}
 .tchk input:focus-visible+span{outline:2px solid var(--green);outline-offset:2px}
 .prow{display:grid;grid-template-columns:minmax(0,1fr) 64px 60px repeat(4,74px) 34px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
-.num-in.dorsal{font-family:var(--font-d);font-weight:700;font-size:17px;background:var(--surface-2)}
+.num-in.dorsal{font-family:var(--font-d);font-weight:700;font-size:18px;background:var(--kit1);color:var(--kit-fg,#fff);border-color:var(--kit-bd,var(--line-2))} /* como la camiseta: su color y el de sus números */
+.num-in.age{background:var(--violet-soft);color:var(--violet);border-color:var(--violet-line);font-weight:700} /* morado: no se confunde con el dorsal ni con los datos */
 .num-in.dorsal.dup{border-color:var(--red);background:var(--red-soft);color:var(--red)}
 .dn{display:inline-grid;place-items:center;min-width:22px;height:18px;padding:0 4px;margin-left:4px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);font:700 11.5px/1 var(--font-d);color:var(--text-2);vertical-align:1px}
 .row-del{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer;transition:.15s}
@@ -621,7 +624,7 @@ select.input{-webkit-appearance:none;appearance:none;background:var(--surface) v
 .tag.loan-tag{background:#e8eefc;color:#3654b3}
 .tag.ret-tag{background:var(--green-soft);color:var(--green-d)}
 .x-item .x-return{color:var(--green-d);border-color:var(--green-soft-2)}
-.prow.loaned .num-in:not(.m){background:var(--surface-2);color:var(--muted);border-style:dashed;cursor:not-allowed}
+.prow.loaned .num-in:not(.m):not(.dorsal):not(.age){background:var(--surface-2);color:var(--muted);border-style:dashed;cursor:not-allowed}
 .prow.loaned .who b{color:var(--text-2)}
 .bench-row.is-loan .bench-main{opacity:.85}
 .tbl tr.is-loan td{color:var(--muted)}
@@ -1507,7 +1510,15 @@ const flag=c=>NAT[c]?`<span class="flag fi fi-${NAT[c].i}" role="img" aria-label
 const tags=p=>`${p.cantera?'<span class="tag cantera">Cantera</span>':''}${p.status?`<span class="tag muted">${esc(p.status)}</span>`:''}`;
 const miniShirt=p=>`<span class="mini-shirt">${shirt({num:p.num,gk:p.pos==='POR'})}</span>`;
 const nextLabel=l=>{const y=parseInt(l.slice(0,4))+1;return `${y}/${String(y+1).slice(2)}`;};
-const setKitVar=()=>{document.documentElement.style.setProperty('--kit1',S.kit.c1);applyPrefs();}; /* (el tema "Mi club" sale del escudo, que sin editar sigue a la camiseta) */
+const setKitVar=()=>{
+  const r=document.documentElement.style, k=S.kit;
+  r.setProperty('--kit1',k.c1);
+  /* casilla del dorsal en el formulario: fondo del color principal y número del color de los números de la camiseta
+     (si no se leen bien sobre ese fondo, el secundario, los detalles, blanco o negro) */
+  r.setProperty('--kit-fg',[k.num,k.c2,k.trim,'#ffffff','#101a14'].find(c=>c&&contrastOf(c,k.c1)>=3)||'#ffffff');
+  r.setProperty('--kit-bd',contrastOf(k.c1,'#ffffff')<1.4?'#c9d2c8':mixHex(k.c1,'#000000',.22));
+  applyPrefs();
+}; /* (el tema "Mi club" sale del escudo, que sin editar sigue a la camiseta) */
 
 /* ---------- Cálculos a partir de las temporadas ---------- */
 const byId=id=>S.players.find(p=>p.id==id);
