@@ -1937,7 +1937,8 @@ const BALLON_ALIAS={'messi':'lionel messi','leo messi':'lionel messi','cristiano
   'van basten':'marco van basten','cruyff':'johan cruyff','platini':'michel platini','beckenbauer':'franz beckenbauer','di stefano':'alfredo di stefano','figo':'luis figo','nedved':'pavel nedved'};
 const bKey=n=>{const k=normName(n);return BALLON_ALIAS[k]||k;};
 /* Candidatos al Balón de Oro que se sugieren al apuntarlo: [jugador, nacionalidad, año de nacimiento, último año en activo si ya se retiró].
-   Solo salen los que estaban en activo esa temporada (de los 17 años hasta su retirada; los que siguen jugando, hasta los 40). */
+   Solo salen los que estaban en activo esa temporada: desde los 17 años y hasta su retirada. Todos se retiran solos
+   al cumplir 40 (en tu carrera, aunque en la vida real sigan jugando). Los jugadores de tu club no se tocan. */
 const STARS=[['Lionel Messi','ARG',1987],['Cristiano Ronaldo','POR',1985],['Neymar','BRA',1992],['Kylian Mbappé','FRA',1998],['Erling Haaland','NOR',2000],
   ['Mohamed Salah','EGY',1992],['Robert Lewandowski','POL',1988],['Kevin De Bruyne','BEL',1991],['Luka Modrić','CRO',1985],['Karim Benzema','FRA',1987],
   ['Harry Kane','ENG',1993],['Antoine Griezmann','FRA',1991],['Virgil van Dijk','NED',1991],['Sadio Mané','SEN',1992],['Vinícius Júnior','BRA',2000],
@@ -1955,8 +1956,8 @@ const STARS=[['Lionel Messi','ARG',1987],['Cristiano Ronaldo','POR',1985],['Neym
   ['Andrés Iniesta','ESP',1984,2024],['Zlatan Ibrahimović','SWE',1981,2023],['Gerard Piqué','ESP',1987,2022],['Mesut Özil','GER',1988,2023],['Marcelo','BRA',1988,2025],
   ['David Silva','ESP',1986,2023],['Arjen Robben','NED',1984,2021],['Franck Ribéry','FRA',1983,2022],['Wayne Rooney','ENG',1985,2021],['Fernando Torres','ESP',1984,2019],
   ['Xavi Hernández','ESP',1980,2019]];
-/* y = año del Balón de Oro (el final de la temporada) */
-const starActive=(st,y)=>y-st[2]>=17&&(st[3]?y<=st[3]:y<=Math.max(2027,st[2]+40));
+/* y = año del Balón de Oro (el final de la temporada); y-1-nacimiento = los años que cumple al empezar esa temporada */
+const starActive=(st,y)=>y-st[2]>=17&&y-1-st[2]<40&&(!st[3]||y<=st[3]);
 /* año en que empieza tu carrera (el verano de tu primera temporada) y años de tu carrera, del más reciente al primero */
 const seasonYear=label=>parseInt(label)+1;
 const careerY0=()=>seasonYear((S.seasons[0]||S.current).label);
@@ -2054,7 +2055,7 @@ function openBallonForm(label){
   const names=[...new Set([
     ...S.players.filter(p=>!(p.status==='Retirado'&&p.leftIn&&p.leftIn<label)).map(p=>p.name),
     ...STARS.filter(st=>starActive(st,y)).map(st=>st[0]),
-    ...((S.intl&&S.intl.ballon)||[]).map(b=>b.name)
+    ...((S.intl&&S.intl.ballon)||[]).map(b=>b.name).filter(n=>{const st=STARS.find(x=>bKey(x[0])===bKey(n));return !st||starActive(st,y);})
   ])].sort((a,b)=>a.localeCompare(b,'es'));
   openModal(`${mHead(`Balón de Oro ${seasonYear(label)}`,`Temporada ${label}`)}
   <form class="form" data-form="ballon" autocomplete="off">
