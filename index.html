@@ -2600,7 +2600,7 @@ function openAddPlayer(inForm){
     <div class="field"><label for="p-pos">Posición</label><select class="input" id="p-pos" name="pos">${POS_ORDER.map(p=>`<option ${p===pos?'selected':''}>${p}</option>`).join('')}</select></div>
     <div class="field"><label for="p-num">Dorsal</label><input class="input" id="p-num" name="num" type="number" min="1" max="99" value="${freeNum()}" inputmode="numeric"></div>
     <div class="field"><label for="p-ovr">Media</label><input class="input" id="p-ovr" name="ovr" type="number" min="40" max="99" value="72" inputmode="numeric"></div>
-    <div class="field"><label for="p-age">${se?'Edad actual':'Edad'}</label><input class="input" id="p-age" name="age" type="number" min="15" max="45" value="19" inputmode="numeric"></div>
+    <div class="field"><label for="p-age">${se?`Edad en la ${label}`:'Edad'}</label><input class="input" id="p-age" name="age" type="number" min="15" max="45" value="19" inputmode="numeric"></div>
     <div class="field"><label for="p-nat">Nacionalidad</label><div class="nat-field"><span id="p-nat-flag">${flag('ESP')}</span><select class="input" id="p-nat" name="nat">${NATS.slice().sort((a,b)=>a[0]==='ESP'?-1:b[0]==='ESP'?1:a[2].localeCompare(b[2],'es')).map(([c,,n])=>`<option value="${c}" ${c==='ESP'?'selected':''}>${n}</option>`).join('')}</select></div></div>
     <label class="check inline"><input type="checkbox" name="cantera">Es canterano</label>
   </form>
@@ -3032,7 +3032,10 @@ const FORMS={
     const ovr=clamp(parseInt(fd.get('ovr'))||70,40,99);
     /* since: temporada en la que llegó al club (la que se está apuntando/editando o, desde Plantilla, la que está en juego) */
     const since=fd.get('ctx')==='season'&&UI.edit!=null&&S.seasons[UI.edit]?S.seasons[UI.edit].label:S.current.label;
-    const p={id:Date.now(),name,pos:fd.get('pos'),num:clamp(parseInt(fd.get('num'))||99,1,99),nat:NAT[fd.get('nat')]?fd.get('nat'):'ESP',age:clamp(parseInt(fd.get('age'))||20,15,45),ovr,cantera:fd.get('cantera')==='on',since};
+    /* la edad que se escribe es la que tenía en esa temporada (al terminarla); se guarda la de la temporada en juego,
+       que es la que la app va contando (p. ej. 20 en la 2017/18 con la 2019/20 en juego = 22) */
+    const age=clamp(parseInt(fd.get('age'))||20,15,45)+Math.max(0,parseInt(S.current.label)-parseInt(since));
+    const p={id:Date.now(),name,pos:fd.get('pos'),num:clamp(parseInt(fd.get('num'))||99,1,99),nat:NAT[fd.get('nat')]?fd.get('nat'):'ESP',age,ovr,cantera:fd.get('cantera')==='on',since};
     S.players.push(p); save(); closeModal();
     const again=fd.get('again')==='1', inForm=fd.get('ctx')==='season';
     /* desde el formulario de temporada: aparece en el once (si aún tiene huecos) o en el banquillo para rellenar sus datos */
