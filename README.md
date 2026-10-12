@@ -4,6 +4,13 @@ App web para llevar tu **modo carrera de EA SPORTS FC**: plantilla con camisetas
 
 Estado: **boceto** en una sola página (`index.html`, HTML + CSS + JavaScript, sin dependencias). Los datos se guardan en el navegador (`localStorage`).
 
+## Dónde está publicada
+
+- **Vercel** (proyecto `career-board` del equipo Lumetrix): https://career-board-three.vercel.app — se publica sola con cada cambio que se sube a `main`. `.vercelignore` deja fuera los PNG originales y las herramientas.
+- **GitHub Pages**: https://lumetrixxxxai.github.io/Carrer-Board/
+
+Las dos direcciones tienen que estar en Firebase › Authentication › Configuración › Dominios autorizados para que funcione el login con Google.
+
 ## Estructura
 
 | Ruta | Qué es |
