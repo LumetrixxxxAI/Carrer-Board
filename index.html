@@ -2421,7 +2421,7 @@ function renderApuntar(){
 /* Planes: Amateur (gratis) y Pro (3,99 € al mes). Sin plan anual ni pago único.
    Diferencias: carreras (1 / ilimitadas), temporadas (5 / ilimitadas), tema del club y apuntar en Internacional. */
 function renderPremium(){
-  const pro=isPro(), cur='<button class="btn secondary" disabled>Tu plan actual</button>';
+  const pro=isPro(), cur=hasSub()?`<button class="btn secondary" data-action="billing">${ic('card')}Gestionar suscripción</button>`:'<button class="btn secondary" disabled>Tu plan actual</button>';
   const plans=[
     {name:'Amateur',desc:'Para llevar tu carrera.',price:'0 €',per:'para siempre',save:'',btn:pro?'<button class="btn secondary" disabled>Incluido en Pro</button>':cur,
       f:[[1,'1 modo carrera'],[1,`Hasta ${FREE_SEASONS} temporadas`],[1,'Tema claro y oscuro'],[1,'Internacional: consulta los rankings'],[1,'Plantilla, temporadas, historia y vitrina'],[0,'Tema con los colores de tu club'],[0,'Apuntar Mundiales, Eurocopas y Balones de Oro']]},
@@ -2734,6 +2734,7 @@ function openAccount(){
   openModal(`${mHead('Tu cuenta','')}
   <div class="acct"><span class="avatar">${avatarHTML()}</span><div><b>${esc(S.manager)}</b><span>${AUTH_USER&&AUTH_USER.email?esc(AUTH_USER.email):'Cuenta de Google'} · ${isPro()?'Plan Pro':'Plan Amateur (gratis)'}</span></div></div>
   <button class="m-row" data-nav="premium"><span class="icon-btn" style="background:var(--gold-soft);color:var(--gold)">${ic('crown')}</span><div><b>${isPro()?'Tu plan Pro':'Ver planes Pro'}</b><span>${isPro()?'Carreras y temporadas ilimitadas':'Más carreras, temporadas ilimitadas, tema de tu club e Internacional'}</span></div></button>
+  ${hasSub()?`<button class="m-row" data-action="billing"><span class="icon-btn">${ic('card')}</span><div><b>Gestionar suscripción</b><span>${USERDOC.cancelAtPeriodEnd&&proUntil()?`Cancelada: eres Pro hasta el ${proUntil()}`:'Tarjeta, facturas o cancelar el Pro'}</span></div></button>`:''}
   <button class="m-row" data-nav="config"><span class="icon-btn">${ic('gear')}</span><div><b>Configuración</b><span>Idioma, tu club, preferencias y tus datos</span></div></button>
   <button class="m-row" data-action="logout"><span class="icon-btn">${ic('logout')}</span><div><b>Cerrar sesión</b></div></button>`);
 }
@@ -2794,6 +2795,9 @@ const seasonsFull=()=>!isPro()&&S.seasons.length>=FREE_SEASONS;
    porque el código es público. Las reglas de Firestore tienen la misma huella. */
 const PRO_FREE=['27b0fb7c106e096d6c89a356d09de46c83e13769e3f9789584737684550acd5f'];
 let OWNER_PRO=false;
+let USERDOC={}; /* users/{uid}: plan, suscripción de Stripe (subscriptionId, subStatus, cancelAtPeriodEnd, currentPeriodEnd) */
+const hasSub=()=>!!(USERDOC.subscriptionId&&USERDOC.stripeCustomerId);
+const proUntil=()=>{const t=USERDOC.currentPeriodEnd;const d=t&&(t.toDate?t.toDate():new Date(t));return d&&!isNaN(d)?d.toLocaleDateString('es-ES',{day:'numeric',month:'long'}):'';};
 async function ownerPro(u){
   if(!u||!u.email||!u.emailVerified||!(window.crypto&&crypto.subtle))return false;
   try{const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(u.email.trim().toLowerCase()));
@@ -2995,16 +2999,41 @@ let CREST_FIRST=false;
 function openCrest(first){CREST_FIRST=first===true;cdraft={...clone(crestOf()),short:clubShort()};openModal(crestModal());}
 function refreshCrest(){const m=$('#modalRoot .modal');if(m){const y=m.scrollTop;m.innerHTML=crestModal();m.scrollTop=y;}}
 function openCheckout(){
-  const info={n:'Career Board Pro',p:'3,99 €',per:'al mes · cancela cuando quieras'};
-  openModal(`${mHead('Checkout seguro','Así funcionará el pago en la versión real')}
-  <div class="sum"><div><b>${info.n}</b><div style="color:var(--text-2);font-size:13px">${info.per}</div></div><strong>${info.p}</strong></div>
+  if(!AUTH_USER){toast('Entra con tu cuenta de Google para hacerte Pro','info');return;}
+  openModal(`${mHead('Hazte Pro','Pago seguro con Stripe')}
+  <div class="sum"><div><b>Career Board Pro</b><div style="color:var(--text-2);font-size:13px">al mes · sin permanencia</div></div><strong>3,99 €</strong></div>
   <div class="steps">
-    <div><i>1</i><span>La app llama a <code>/api/checkout</code>, una función privada en Vercel.</span></div>
-    <div><i>2</i><span>El servidor crea el pago con la clave secreta de Stripe (nunca sale del servidor).</span></div>
-    <div><i>3</i><span>Pagas en la página de Stripe y un webhook activa tu plan en Firestore.</span></div>
+    <div><i>1</i><span>Pagas en la página segura de Stripe, con tarjeta u otros métodos. Nosotros nunca vemos tu tarjeta.</span></div>
+    <div><i>2</i><span>Al terminar vuelves aquí y tu plan Pro se activa solo en unos segundos, en todos tus dispositivos.</span></div>
+    <div><i>3</i><span>Se renueva cada mes. Lo cancelas cuando quieras desde <b>Tu cuenta › Gestionar suscripción</b>.</span></div>
   </div>
-  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Ahora no</button><button class="btn primary" data-action="stripe-go">${ic('lock')}Continuar a Stripe</button></div>
-  <div class="secure">${ic('shield')}Pago cifrado · Cancela cuando quieras</div>`);
+  <div class="modal-f"><button class="btn secondary" data-action="close-modal">Ahora no</button><button class="btn primary" data-action="stripe-go">${ic('lock')}Ir al pago</button></div>
+  <div class="secure">${ic('shield')}Pago cifrado por Stripe · Cancela cuando quieras</div>`);
+}
+/* ---------- Pagos (Stripe, a través de las funciones de Vercel) ----------
+   /api/checkout abre la página de pago; /api/portal, la de gestionar la suscripción (tarjeta, facturas, cancelar).
+   El Pro lo activa el webhook de Stripe en users/{uid}; la app lo nota sola (watchPlan). */
+const PAY_API='https://career-board-three.vercel.app/api/';
+async function payCall(path,btn){
+  if(!AUTH_USER||!window.CBAuth||!window.CBAuth.getToken){toast('Entra con tu cuenta de Google para continuar','info');return;}
+  const label=btn&&btn.innerHTML; if(btn){btn.disabled=true;btn.innerHTML='<i class="spin"></i>Abriendo…';}
+  try{
+    const token=await window.CBAuth.getToken();
+    const r=await fetch(PAY_API+path,{method:'POST',headers:{Authorization:'Bearer '+token}});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.url)throw new Error(d.error||'No se ha podido conectar con el pago');
+    location.href=d.url;
+  }catch(e){
+    toast(navigator.onLine?(e.message||'No se ha podido conectar con el pago'):'Sin conexión: inténtalo cuando vuelva internet','info');
+    if(btn){btn.disabled=false;btn.innerHTML=label;}
+  }
+}
+/* al volver de Stripe: ?pago=ok o ?pago=cancelado */
+function payReturn(){
+  const q=new URLSearchParams(location.search), st=q.get('pago'); if(!st)return;
+  q.delete('pago'); history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash);
+  if(st==='ok')setTimeout(()=>toast(isPro()?'¡Ya eres Pro! Gracias por apoyar Career Board':'¡Pago hecho! Tu plan Pro se activa en unos segundos','crown'),600);
+  else toast('Pago cancelado: no se te ha cobrado nada','info');
 }
 
 /* ---------- Formularios ---------- */
@@ -3186,7 +3215,7 @@ const setActiveCid=(uid,cid)=>{try{localStorage.setItem(ACTIVE_K(uid),cid);}catc
 function watchPlan(uid){
   if(CLOUD.planUid===uid)return;
   CLOUD.unplan&&CLOUD.unplan(); CLOUD.planUid=uid;
-  CLOUD.unplan=window.CBDB.watchUser(uid,d=>setPlan(OWNER_PRO?'pro':d&&d.plan));
+  CLOUD.unplan=window.CBDB.watchUser(uid,d=>{USERDOC=d||{};setPlan(OWNER_PRO?'pro':d&&d.plan);});
 }
 const SYNC_TXT={ok:'Guardado en tu cuenta',pending:'Guardando…',saving:'Guardando…',off:'Sin conexión: está guardado en este dispositivo y se subirá solo al volver',err:'No se ha podido guardar en tu cuenta. Está guardado en este dispositivo'};
 function setSync(st){
@@ -3307,7 +3336,7 @@ function cloudLogout(){
   clearTimeout(CLOUD.timer); CLOUD.unwatch&&CLOUD.unwatch(); CLOUD.unplan&&CLOUD.unplan();
   Object.assign(CLOUD,{on:false,uid:null,cid:'principal',rev:0,unwatch:null,unplan:null,planUid:null,pendingRemote:null}); setSync('');
   try{localStorage.removeItem('cb-plan-last');}catch(e){}
-  OWNER_PRO=false;
+  OWNER_PRO=false; USERDOC={};
   if(PLAN!=='free'){PLAN='free';applyPrefs();refreshHeader();}
 }
 window.addEventListener('online',()=>{if(AUTH_USER&&window.CBDB&&!CLOUD.on)cloudLogin(AUTH_USER);else if(CLOUD.on&&CLOUD.status==='off')setSync('saving');});
@@ -3379,7 +3408,8 @@ const ACTIONS={
   checkout(){openCheckout();},
   'close-modal':closeModal,
   'modal-bd'(el,e){if(e.target===el)closeModal();},
-  'stripe-go'(){closeModal();toast('Boceto: aquí se abriría Stripe Checkout','card');},
+  'stripe-go'(b){payCall('checkout',b);},
+  'billing'(b){payCall('portal',b);},
   'new-career'(){if(!isPro())openProGate('careers');else if(!CLOUD.on)toast('Para crear otra carrera necesitas conexión con tu cuenta','info');else openNewCareer(true);},
   'career-open'(b){switchCareer(b.dataset.id);},
   'career-del'(b){openDeleteCareer(b.dataset.id);},
@@ -3555,6 +3585,7 @@ document.addEventListener('keydown',e=>{
   applyPrefs();
   buildIntroVisuals();
   setSlide(0);
+  payReturn();
   /* ya habías entrado con Google: se abre tu carrera mientras Firebase confirma la sesión (si no la confirma, va al login) */
   let ses=false; try{ses=localStorage.getItem('cb-sesion')==='1';}catch(e){}
   if(FB_ON&&ses&&location.protocol!=='file:'){screen('app');go('inicio');}
@@ -3597,7 +3628,8 @@ if(cfg&&cfg.apiKey){
           throw e;
         }
       },
-      signOut:()=>signOut(auth)
+      signOut:()=>signOut(auth),
+      getToken:()=>auth.currentUser?auth.currentUser.getIdToken():Promise.resolve(null)
     };
     getRedirectResult(auth).catch(e=>window.onAuthError&&window.onAuthError(e));
     onAuthStateChanged(auth,u=>window.onAuthUser&&window.onAuthUser(u));

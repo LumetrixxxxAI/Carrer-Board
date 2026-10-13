@@ -1,0 +1,12 @@
+{
+  "name": "career-board",
+  "private": true,
+  "description": "Career Board: la app (index.html) y las funciones de pago con Stripe en Vercel (carpeta api/)",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.0",
+    "stripe": "^23.0.0"
+  }
+}
