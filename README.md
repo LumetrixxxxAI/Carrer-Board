@@ -63,6 +63,28 @@ Mientras tanto, para probar Pro con una cuenta:
 
 Las reglas no dejan crear una segunda carrera sin Pro. Los datos reales de Internacional (Mundiales, Eurocopas, Copas América y Balones de Oro) están en `index.html` (`WC_HIST`, `EURO_HIST`, `COPA_HIST` y `BALLON_HIST`).
 
+## Pagos del plan Pro (Stripe)
+
+La cuenta de Stripe **la comparte Work IA**. Career Board no toca nada suyo: tiene su propio producto, crea sus propios clientes y su webhook solo hace caso a las suscripciones marcadas con `metadata.app = career-board` (o con el precio de Career Board Pro). El webhook de Work IA busca a sus usuarios por su propio `stripeCustomerId`, así que ignora los pagos de Career Board.
+
+| Pieza | Qué hace |
+|---|---|
+| `api/checkout.js` | La app la llama (con el token de Google) y devuelve la página de pago de Stripe: suscripción de 3,99 €/mes. |
+| `api/portal.js` | Devuelve el portal de cliente de Stripe: cambiar la tarjeta, ver facturas o cancelar. |
+| `api/stripe-webhook.js` | Stripe avisa de cada pago o cambio y la función pone `plan: "pro"` o `"free"` en `users/{uid}` (Firestore). Es lo único que da o quita el Pro. |
+
+Variables de entorno en Vercel (proyecto `career-board`, Settings › Environment Variables, en Production):
+
+- `STRIPE_SECRET_KEY`: clave secreta de Stripe.
+- `STRIPE_WEBHOOK_SECRET`: secreto del webhook de Career Board.
+- `FIREBASE_SERVICE_ACCOUNT`: el JSON entero de la cuenta de servicio de Firebase (Configuración del proyecto › Cuentas de servicio › Generar nueva clave privada).
+- `STRIPE_PRICE_ID`: el precio de "Career Board Pro" (`price_…`).
+- `STRIPE_PORTAL_CONFIG` (opcional): configuración propia del portal de cliente.
+
+Webhook de Stripe: `https://career-board-three.vercel.app/api/stripe-webhook`, con los eventos `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`.
+
+Las claves nunca van en el código: solo en Vercel. Después de cambiar una variable hay que volver a desplegar.
+
 ## Actualizar los trofeos
 
 1. Deja el PNG en `assets/trofeos/` (el nombre solo tiene que parecerse al del título: `copa-del-rey.png`, `FA Cup.png`…).
@@ -73,6 +95,5 @@ Los títulos que aún no tienen imagen se ven con un dibujo.
 ## Stack previsto
 
 - Inicio de sesión con Google (Firebase Auth) y datos en Firestore.
-- Pagos con Stripe (plan Pro), con una función en el servidor que guarde `plan: "pro"` en `users/{uid}` al pagar.
 
 Career Board es una app independiente, no afiliada a EA SPORTS, la FIFA, ninguna liga ni ningún club.
