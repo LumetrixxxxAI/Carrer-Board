@@ -2821,9 +2821,9 @@ let PLAN=(()=>{try{return localStorage.getItem('cb-plan-last')==='pro'?'pro':'fr
 const FREE_SEASONS=5;
 const isPro=()=>PLAN==='pro';
 const seasonsFull=()=>!isPro()&&S.seasons.length>=FREE_SEASONS;
-/* Cuentas Pro para siempre, sin pagar (el dueño de la app). Va la huella SHA-256 del correo, no el correo,
+/* Cuentas Pro para siempre, sin pagar (el dueño de la app y las que él invite). Va la huella SHA-256 del correo, no el correo,
    porque el código es público. Las reglas de Firestore tienen la misma huella. */
-const PRO_FREE=['27b0fb7c106e096d6c89a356d09de46c83e13769e3f9789584737684550acd5f'];
+const PRO_FREE=['27b0fb7c106e096d6c89a356d09de46c83e13769e3f9789584737684550acd5f','1718fcad8c6fe6c52f16d33acf1fdaf807182513c49b39a570eff1cb6638bda0']; /* el dueño y una cuenta invitada */
 let OWNER_PRO=false;
 let USERDOC={}; /* users/{uid}: plan, suscripción de Stripe (subscriptionId, subStatus, cancelAtPeriodEnd, currentPeriodEnd) */
 const hasSub=()=>!!(USERDOC.subscriptionId&&USERDOC.stripeCustomerId);
