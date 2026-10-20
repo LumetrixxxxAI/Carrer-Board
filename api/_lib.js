@@ -25,9 +25,16 @@ const ORIGINS = {
   'http://localhost:8141': 'http://localhost:8141/'
 };
 
+/* JSON de la cuenta de servicio. Si al pegarlo en Vercel se perdió la llave "}" del final (pasa al copiar), se arregla aquí. */
+function serviceAccount() {
+  const raw = (process.env.FIREBASE_SERVICE_ACCOUNT || '').trim();
+  for (const t of [raw, raw + '}']) { try { return JSON.parse(t); } catch (e) {} }
+  return JSON.parse(raw); /* (para que salga el error real) */
+}
+
 function firebase() {
   if (!getApps().length) {
-    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+    const sa = serviceAccount();
     initializeApp({ credential: cert(sa), projectId: sa.project_id || PROJECT_ID });
   }
   return { auth: getAuth(), db: getFirestore(), FieldValue };
@@ -72,4 +79,4 @@ function send(res, status, body) {
 
 const portalConfig = () => (process.env.STRIPE_PORTAL_CONFIG ? { configuration: process.env.STRIPE_PORTAL_CONFIG } : {});
 
-module.exports = { APP, firebase, stripe, cors, appUrl, currentUser, send, portalConfig };
+module.exports = { APP, serviceAccount, firebase, stripe, cors, appUrl, currentUser, send, portalConfig };

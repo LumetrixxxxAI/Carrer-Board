@@ -1,7 +1,7 @@
 /* GET /api/estado → comprueba que los pagos están bien configurados, sin enseñar ninguna clave:
    variables puestas, clave de Stripe válida (y si es real o de prueba), el precio de Career Board Pro
    y que la cuenta de servicio de Firebase puede leer Firestore. */
-const { firebase, stripe, send } = require('./_lib');
+const { serviceAccount, firebase, stripe, send } = require('./_lib');
 
 module.exports = async (req, res) => {
   const out = {
@@ -19,7 +19,9 @@ module.exports = async (req, res) => {
     out.precio = { ok: true, producto: p.product && p.product.name, importe: p.unit_amount / 100, moneda: p.currency, cada: p.recurring && p.recurring.interval, activo: p.active };
   } catch (e) { out.precio = { ok: false, error: e && e.message }; }
   try {
-    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+    const raw = (process.env.FIREBASE_SERVICE_ACCOUNT || '').trim();
+    out.firebaseJson = { caracteres: raw.length, empiezaBien: raw.startsWith('{'), terminaBien: raw.endsWith('}') };
+    const sa = serviceAccount();
     out.firebaseProyecto = sa.project_id || null;
     await firebase().db.collection('users').doc('_comprobacion').get();
     out.firestore = { ok: true };
