@@ -25,10 +25,12 @@ const ORIGINS = {
   'http://localhost:8141': 'http://localhost:8141/'
 };
 
-/* JSON de la cuenta de servicio. Si al pegarlo en Vercel se perdió la llave "}" del final (pasa al copiar), se arregla aquí. */
+/* JSON de la cuenta de servicio. Por si al pegarlo en Vercel se perdió la llave "}" del final o se pegó dos veces
+   (pasa al copiar), se prueba también con la llave añadida y con la última copia completa. */
 function serviceAccount() {
   const raw = (process.env.FIREBASE_SERVICE_ACCOUNT || '').trim();
-  for (const t of [raw, raw + '}']) { try { return JSON.parse(t); } catch (e) {} }
+  const lastCopy = raw.slice(raw.lastIndexOf('{', raw.lastIndexOf('"type"')));
+  for (const t of [raw, raw + '}', lastCopy]) { try { const j = JSON.parse(t); if (j && j.private_key) return j; } catch (e) {} }
   return JSON.parse(raw); /* (para que salga el error real) */
 }
 
