@@ -1803,6 +1803,9 @@ function setRec(i){
 /* Edad que tenía un jugador en una temporada. Su edad guardada es la de la temporada en juego o, si ya se fue
    del club, la de la temporada en la que se fue (desde entonces no cumple años en la app). */
 const ageIn=(se,p)=>p.age-(parseInt(p.status&&p.leftIn?p.leftIn:S.current.label)-parseInt(se.label));
+/* Edad que se enseña en su ficha: la de la última temporada apuntada (la que está en juego aún no se ha jugado);
+   si ya se fue del club, la que tenía al irse */
+const shownAge=p=>!p.status&&lastSeason()?ageIn(lastSeason(),p):p.age;
 /* Plantilla de una temporada ya apuntada: los jugadores que jugaron ese año, con la media, la edad y el dorsal que tenían */
 function seasonSquad(i){
   const se=S.seasons[i];
@@ -2638,7 +2641,7 @@ function openPlayer(id){
     +(myIntl.length?`<div class="pm-shelf-sec"><span class="pm-shelf-t">Con su selección</span><div class="pm-shelf">${myIntl.map(x=>shelfItem(x,trophyOf(x.k))).join('')}</div></div>`:'');
   openModal(`<div class="modal-h" style="margin-bottom:0"><div></div><button class="icon-btn" data-action="close-modal" aria-label="Cerrar">${ic('x')}</button></div>
   <div class="pm-head"><div class="sh">${shirt({num:p.num,name:surname(p.name),back:true,gk})}</div>
-    <div><h2>${esc(p.name)}</h2><div class="meta">${posb(p.pos)} Dorsal ${p.num} · ${p.age} años · <span class="nat">${flag(p.nat)}${esc(natName(p.nat))}</span> ${tags(p)}</div>
+    <div><h2>${esc(p.name)}</h2><div class="meta">${posb(p.pos)} Dorsal ${p.num} · ${shownAge(p)} años · <span class="nat">${flag(p.nat)}${esc(natName(p.nat))}</span> ${tags(p)}</div>
     <div class="pm-rates"><div><span>Media</span><b>${p.ovr}</b></div><div><span>En el club desde</span><b>${rows.length?rows[0].label:S.current.label}</b></div></div></div></div>
   ${rows.length?`<div class="pm-sum"><div><b>${t.pj}</b><span>Partidos</span></div><div><b>${t.g}</b><span>Goles</span></div><div><b>${t.a}</b><span>Asistencias</span></div></div>
   ${hl?`<div class="pm-hl">${hl}</div>`:''}
