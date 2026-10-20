@@ -185,6 +185,8 @@ h1,h2,h3,p{margin:0}
 .fchip span{font-size:12px;color:var(--muted)}
 .fchip .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--gold-soft);color:var(--gold);flex:none}
 .fchip .ico.g{background:var(--green-soft);color:var(--green)}
+.fchip .ico-tro .tro-mini{width:28px;height:28px} /* el trofeo de verdad (imagen) en las etiquetas de la intro */
+@media (max-width:640px){.fchip .ico-tro .tro-mini{width:24px;height:24px}}
 .fc1{left:0;bottom:6%}
 .fc2{right:0;top:4%;animation-delay:-3s}
 .formock{position:relative;width:min(400px,100%);padding:18px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
@@ -2499,14 +2501,14 @@ function buildIntroInner(){
   const P=id=>DEMO.players.find(p=>p.id===id);
   const b=p=>shirt({num:p.num,name:surname(p.name),back:true});
   $('#vis1').innerHTML=`<div class="fan"><div class="disc"></div><div class="fs f2">${b(P(9))}</div><div class="fs f1">${b(P(10))}</div><div class="fs f3">${b(P(8))}</div>
-    <div class="fchip fc2"><span class="ico">${ic('trophy')}</span><div><b>Europa League</b><span>Campeones 2029/30</span></div></div>
+    <div class="fchip fc2"><span class="ico ico-tro">${trophyMini('UEFA Europa League')}</span><div><b>Europa League</b><span>Campeones 2029/30</span></div></div>
     <div class="fchip fc1"><span class="ico g">${ic('ball')}</span><div><b>42 goles</b><span>Robles · récord del club</span></div></div></div>`;
   const rows=[[P(10),49,36,10,89],[P(9),47,20,14,87],[P(8),50,16,22,88],[P(7),48,9,16,86]];
   $('#vis2').innerHTML=`<div style="position:relative"><div class="formock"><h4>Fin de temporada 2030/31</h4><div class="sub">Tu club · LaLiga · 1º</div>
     <div class="fm-h"><span>Jugador</span><span>PJ</span><span>G</span><span>A</span><span>Med.</span></div>
     ${rows.map(([p,pj,g,a,m])=>`<div class="fm-r"><div class="who">${miniShirt(p)}${esc(surname(p.name))}</div><i>${pj}</i><i>${g}</i><i>${a}</i><i style="background:var(--green-soft);color:var(--green-d);border-color:var(--green-soft-2)">${m}</i></div>`).join('')}
     <span class="btn primary">${ic('check')}Guardar temporada</span></div>
-    <div class="fchip" style="left:-22px;bottom:-22px"><span class="ico">${ic('trophy')}</span><div><b>LaLiga</b><span>Campeones</span></div></div></div>`;
+    <div class="fchip" style="left:-22px;bottom:-22px"><span class="ico ico-tro">${trophyMini('LaLiga')}</span><div><b>LaLiga</b><span>Campeones</span></div></div></div>`;
   $('#vis3').innerHTML=pitchHTML(bestXI(DEMO.players.filter(p=>!p.status),null,'4-3-3'),'mini'); /* la intro siempre enseña la plantilla de ejemplo */
   $('#loginShirt').innerHTML=shirt({num:10,name:'Tu nombre',back:true});
 }
